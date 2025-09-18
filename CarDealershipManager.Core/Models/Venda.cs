@@ -1,0 +1,46 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CarDealershipManager.Core.Models
+{
+    public class Venda : BaseModel
+    {
+        [Required]
+        [ForeignKey("Veiculo")]
+        [Display(Name = "Id do Veículo")]
+        [Column("Veiculo_Id")]
+        public int VeiculoId { get; set; }
+
+        [Required]
+        [ForeignKey("Concessionaria")]
+        [Display(Name = "Id da Concessionária")]
+        [Column("Concessionaria_Id")]
+        public int ConcessionariaId { get; set; }
+
+        [Required]
+        [ForeignKey("Cliente")]
+        [Display(Name = "Id do Cliente")]
+        [Column("Cliente_Id")]
+        public int ClienteId { get; set; }
+
+        [Required]
+        [Display(Name = "Data da Venda")]
+        [Column("Data_Venda")]
+        public DateTime DataVenda { get; set; }
+
+        [Required]
+        [Display(Name = "Preço de Venda")]
+        [Column("Preco_Venda", TypeName = "decimal(10, 2)")]
+        public required decimal PrecoVenda { get; set; }
+
+        [Required]
+        [StringLength(20)]
+        public required string ProtocoloVenda { get; set; }
+
+
+        // Navigation Properties
+        public Veiculo? Veiculo { get; set; }
+        public Concessionaria? Concessionaria { get; set; }
+        public Cliente? Cliente { get; set; }
+    }
+}
