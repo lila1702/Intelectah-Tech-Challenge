@@ -5,8 +5,8 @@ namespace CarDealershipManager.Core.Interfaces
 {
     public interface IVeiculoRepository : IBaseRepository<Veiculo>
     {
-        Task<IEnumerable<Veiculo>> GetAllByFabricanteIdAsync(int fabricanteId);
-        Task<IEnumerable<Veiculo>> GetAllByTipoAsync(TipoVeiculo tipoVeiculo);
+        Task<IEnumerable<Veiculo>> GetByFabricanteIdAsync(int fabricanteId);
+        Task<IEnumerable<Veiculo>> GetByTipoAsync(TipoVeiculo tipoVeiculo);
         Task<IEnumerable<Veiculo>> SearchByModeloAsync(string modelo);
     }
 }
