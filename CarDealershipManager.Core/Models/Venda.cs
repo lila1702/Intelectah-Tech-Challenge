@@ -31,16 +31,17 @@ namespace CarDealershipManager.Core.Models
         [Required]
         [Display(Name = "Preço de Venda")]
         [Column("Preco_Venda", TypeName = "decimal(10, 2)")]
-        public required decimal PrecoVenda { get; set; }
+        [Range(0.01, double.MaxValue, ErrorMessage = "Preço deve ser acima de 0")]
+        public decimal PrecoVenda { get; set; }
 
         [Required]
         [StringLength(20)]
-        public required string ProtocoloVenda { get; set; }
+        public string ProtocoloVenda { get; set; }
 
 
         // Navigation Properties
-        public Veiculo? Veiculo { get; set; }
-        public Concessionaria? Concessionaria { get; set; }
-        public Cliente? Cliente { get; set; }
+        public Veiculo Veiculo { get; set; }
+        public Concessionaria Concessionaria { get; set; }
+        public Cliente Cliente { get; set; }
     }
 }

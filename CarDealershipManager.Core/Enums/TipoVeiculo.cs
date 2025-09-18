@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CarDealershipManager.Core.Enums
+﻿namespace CarDealershipManager.Core.Enums
 {
     public enum TipoVeiculo
     {
-        Carro,
-        Moto,
-        Caminhao,
-        Onibus
+        Carro = 1,
+        Moto = 2,
+        Caminhao = 3,
+        Onibus = 4,
+        Van = 5
     }
 }
