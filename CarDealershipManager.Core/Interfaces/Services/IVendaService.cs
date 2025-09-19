@@ -1,4 +1,6 @@
-﻿namespace CarDealershipManager.Core.Interfaces.Services
+﻿using CarDealershipManager.Core.DTOs;
+
+namespace CarDealershipManager.Core.Interfaces.Services
 {
     public interface IVendaService
     {

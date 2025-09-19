@@ -1,9 +1,5 @@
-﻿using CarDealershipManager.Core.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using CarDealershipManager.Core.DTOs;
+using CarDealershipManager.Core.Enums;
 
 namespace CarDealershipManager.Core.Interfaces.Services
 {
