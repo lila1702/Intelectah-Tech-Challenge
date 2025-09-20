@@ -16,7 +16,7 @@
         public string ProtocoloVenda { get; set; }
     }
 
-    public class CreateVendaDTO
+    public class VendaCreateDTO
     {
         public int VeiculoId { get; set; }
         public int ConcessionariaId { get; set; }

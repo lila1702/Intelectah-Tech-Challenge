@@ -130,12 +130,12 @@ namespace CarDealershipManager.Infrastructure.Data
 
                 if (entry.State == EntityState.Added)
                 {
-                    entity.CreatedAt = DateTime.Now;
+                    entity.CreatedAt = DateTime.UtcNow;
                 }
 
                 else if (entry.State == EntityState.Modified)
                 {
-                    entity.UpdatedAt = DateTime.Now;
+                    entity.UpdatedAt = DateTime.UtcNow;
                 }
             }
         }

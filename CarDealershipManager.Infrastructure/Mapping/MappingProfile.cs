@@ -19,8 +19,8 @@ namespace CarDealershipManager.Infrastructure.Mapping
             CreateMap<Veiculo, VeiculoDTO>()
                 .ForMember(dest => dest.FabricanteNome, opt => opt.MapFrom(src => src.Fabricante.Nome))
                 .ForMember(dest => dest.TipoVeiculoDescricao, opt => opt.MapFrom(src => src.TipoVeiculo.ToString()));
-            CreateMap<Veiculo, CreateVeiculoDTO>();
-            CreateMap<Veiculo, UpdateVeiculoDTO>();
+            CreateMap<Veiculo, VeiculoCreateDTO>();
+            CreateMap<Veiculo, VeiculoUpdateDTO>();
 
             // Concessionaria
             CreateMap<Concessionaria, ConcessionariaDTO>()

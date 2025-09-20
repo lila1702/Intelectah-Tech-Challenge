@@ -15,7 +15,7 @@ namespace CarDealershipManager.Core.DTOs
         public string? Descricao { get; set; }
     }
 
-    public class CreateVeiculoDTO
+    public class VeiculoCreateDTO
     {
         public string Modelo { get; set; }
         public int AnoFabricacao { get; set; }
@@ -25,7 +25,7 @@ namespace CarDealershipManager.Core.DTOs
         public string? Descricao { get; set; }
     }
 
-    public class UpdateVeiculoDTO
+    public class VeiculoUpdateDTO
     {
         public string Modelo { get; set; }
         public int AnoFabricacao { get; set; }
