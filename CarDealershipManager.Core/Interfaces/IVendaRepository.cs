@@ -7,5 +7,7 @@ namespace CarDealershipManager.Core.Interfaces
         Task<string> GenerateUniqueProtocolAsync();
         Task<IEnumerable<Venda>> GetVendasByPeriodAsync(DateTime dataInicio, DateTime dataFim);
         Task<Venda> GetVendaByProtocolAsync(string protocolo);
+        Task<IEnumerable<Venda>> GetVendasByClienteIdAsync(int clienteId);
+        Task<IEnumerable<Venda>> GetVendasByConcessionariaIdAsync(int concessionariaId);
     }
 }

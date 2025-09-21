@@ -28,51 +28,89 @@ namespace CarDealershipManager.Infrastructure.Services
             _mapper = mapper;
         }
 
-        public Task<VendaDTO> CreateAsync(VendaCreateDTO vendaDTO)
+        public async Task<VendaDTO> CreateAsync(VendaCreateDTO vendaDTO)
         {
+            // Validações básicas
             if (vendaDTO.DataVenda > DateTime.UtcNow)
                 throw new ArgumentException("A data da venda não pode ser futura.");
 
-            var veiculo = _veiculoRepository.GetByIdAsync(vendaDTO.VeiculoId);
+            var veiculo = await _veiculoRepository.GetByIdAsync(vendaDTO.VeiculoId);
             if (veiculo == null)
                 throw new ArgumentException("Veículo não encontrado.");
 
-            var concessionaria = _concessionariaRepository.GetByIdAsync(vendaDTO.ConcessionariaId);
+            var concessionaria = await _concessionariaRepository.GetByIdAsync(vendaDTO.ConcessionariaId);
             if (concessionaria == null)
                 throw new ArgumentException("Concessionária não encontrada.");
 
-            if (vendaDTO.PrecoVenda > veiculo.Result.Preco)
+            if (vendaDTO.PrecoVenda > veiculo.Preco)
+                throw new ArgumentException("O preço de venda não pode ser maior que o preço do veículo.");
 
+            // Buscar ou criar cliente
+            var cliente = await _clienteRepository.GetByCpfAsync(vendaDTO.ClienteCPF);
+            if (cliente == null)
+            {
+                cliente = new Cliente
+                {
+                    Nome = vendaDTO.ClienteNome,
+                    CPF = vendaDTO.ClienteCPF,
+                    Telefone = vendaDTO.ClienteTelefone
+                };
+                cliente = await _clienteRepository.AddAsync(cliente);
+            }
+
+            // Criar venda
+            var protocolo = await _vendaRepository.GenerateUniqueProtocolAsync();
+            var venda = new Venda
+            {
+                VeiculoId = vendaDTO.VeiculoId,
+                ConcessionariaId = vendaDTO.ConcessionariaId,
+                ClienteId = cliente.Id,
+                DataVenda = vendaDTO.DataVenda,
+                PrecoVenda = vendaDTO.PrecoVenda,
+                ProtocoloVenda = protocolo
+            };
+
+            await _vendaRepository.AddAsync(venda);
+            return _mapper.Map<VendaDTO>(await _vendaRepository.GetByIdAsync(venda.Id));
         }
 
-        public Task<IEnumerable<VendaDTO>> GetAllAsync()
+        public async Task<VendaDTO> GetByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            var venda = await _vendaRepository.GetByIdAsync(id);
+            if (venda == null)
+                throw new ArgumentException("Venda não encontrada.");
+
+            return _mapper.Map<VendaDTO>(venda);
         }
 
-        public Task<IEnumerable<VendaDTO>> GetByClienteIdAsync(int clienteId)
+        public async Task<IEnumerable<VendaDTO>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            var vendas = await _vendaRepository.GetAllAsync();
+            return _mapper.Map<IEnumerable<VendaDTO>>(vendas);
         }
 
-        public Task<IEnumerable<VendaDTO>> GetByConcessionariaIdAsync(int concessionariaId)
+        public async Task<IEnumerable<VendaDTO>> GetByClienteIdAsync(int clienteId)
         {
-            throw new NotImplementedException();
+            var vendas = await _vendaRepository.GetVendasByClienteIdAsync(clienteId);
+            return _mapper.Map<IEnumerable<VendaDTO>>(vendas);
         }
 
-        public Task<VendaDTO> GetByIdAsync(int id)
+        public async Task<IEnumerable<VendaDTO>> GetByConcessionariaIdAsync(int concessionariaId)
         {
-            throw new NotImplementedException();
+            var vendas = await _vendaRepository.GetVendasByConcessionariaIdAsync(concessionariaId);
+            return _mapper.Map<IEnumerable<VendaDTO>>(vendas);
         }
 
-        public Task<IEnumerable<VendaDTO>> GetByPeriodAsync(DateTime dataInicio, DateTime dataFim)
+        public async Task<IEnumerable<VendaDTO>> GetByPeriodAsync(DateTime dataInicio, DateTime dataFim)
         {
-            throw new NotImplementedException();
+            var vendas = await _vendaRepository.GetVendasByPeriodAsync(dataInicio, dataFim);
+            return _mapper.Map<IEnumerable<VendaDTO>>(vendas);
         }
 
-        public Task<VendaDTO> GetByProtocolAsync(string protocolo)
+        public async Task<VendaDTO> GetByProtocolAsync(string protocolo)
         {
-            throw new NotImplementedException();
+            var vendas = await _vendaRepository.GetVendaByProtocolAsync(protocolo);
+            return _mapper.Map<VendaDTO>(vendas);
         }
     }
 }

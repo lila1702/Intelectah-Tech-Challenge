@@ -76,5 +76,25 @@ namespace CarDealershipManager.Infrastructure.Repositories
                                .OrderByDescending(v => v.DataVenda)
                                .ToListAsync();
         }
+
+        public async Task<IEnumerable<Venda>> GetVendasByClienteIdAsync(int clienteId)
+        {
+            return await _dbSet.Include(v => v.Veiculo).ThenInclude(ve => ve.Fabricante)
+                               .Include(v => v.Concessionaria)
+                               .Include(v => v.Cliente)
+                               .Where(v => v.ClienteId == clienteId)
+                               .OrderByDescending(v => v.DataVenda)
+                               .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Venda>> GetVendasByConcessionariaIdAsync(int concessionariaId)
+        {
+            return await _dbSet.Include(v => v.Veiculo).ThenInclude(ve => ve.Fabricante)
+                               .Include(v => v.Concessionaria)
+                               .Include(v => v.Cliente)
+                               .Where(v => v.ConcessionariaId == concessionariaId)
+                               .OrderByDescending(v => v.DataVenda)
+                               .ToListAsync();
+        }
     }
 }
