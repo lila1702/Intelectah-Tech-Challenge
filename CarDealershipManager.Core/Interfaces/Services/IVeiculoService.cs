@@ -3,7 +3,7 @@ using CarDealershipManager.Core.Enums;
 
 namespace CarDealershipManager.Core.Interfaces.Services
 {
-    public interface IVeiculosService
+    public interface IVeiculoService
     {
         Task<VeiculoDTO> GetByIdAsync(int id);
         Task<IEnumerable<VeiculoDTO>> GetAllAsync();
