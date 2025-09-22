@@ -1,0 +1,201 @@
+@model CarDealershipManager.Core.DTOs.VendaCreateDTO
+
+@{
+    ViewData["Title"] = "Nova Venda";
+}
+
+<h1>Nova Venda</h1>
+
+<!-- Mensagens de Sucesso -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Mensagens de Erro -->
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create" id="vendaForm">
+            <!-- Erros de Validação Gerais -->
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert" style="display: none;"></div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Informações da Venda</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group mb-3">
+                        <label asp-for="VeiculoId" class="form-label">Veículo *</label>
+                        <select asp-for="VeiculoId" class="form-select" asp-items="ViewBag.VeiculoId" id="VeiculoId">
+                            <option value="">Selecione um veículo...</option>
+                        </select>
+                        <span asp-validation-for="VeiculoId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="ConcessionariaId" class="form-label">Concessionária *</label>
+                        <select asp-for="ConcessionariaId" class="form-select" asp-items="ViewBag.ConcessionariaId">
+                            <option value="">Selecione uma concessionária...</option>
+                        </select>
+                        <span asp-validation-for="ConcessionariaId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="ClienteNome" class="form-label">Nome do Cliente *</label>
+                        <input asp-for="ClienteNome" class="form-control" placeholder="Digite o nome completo" />
+                        <span asp-validation-for="ClienteNome" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="ClienteCPF" class="form-label">CPF *</label>
+                        <input asp-for="ClienteCPF" class="form-control" placeholder="000.000.000-00" />
+                        <span asp-validation-for="ClienteCPF" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="ClienteTelefone" class="form-label">Telefone</label>
+                        <input asp-for="ClienteTelefone" class="form-control" placeholder="(00) 00000-0000" />
+                        <span asp-validation-for="ClienteTelefone" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="DataVenda" class="form-label">Data da Venda *</label>
+                        <input asp-for="DataVenda" class="form-control" type="date"
+                               max="@DateTime.UtcNow.ToString("yyyy-MM-dd")"
+                               value="@DateTime.UtcNow.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="DataVenda" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="PrecoVenda" class="form-label">Preço de Venda *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input asp-for="PrecoVenda" class="form-control" id="PrecoVenda"
+                                   placeholder="0,00" step="0.01" type="number" />
+                        </div>
+                        <small class="form-text text-muted">O preço será preenchido automaticamente ao selecionar o veículo</small>
+                        <span asp-validation-for="PrecoVenda" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary" id="btnSubmit">
+                    <i class="fas fa-save"></i> Finalizar Venda
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Painel de Informações (opcional) -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Informações do Veículo</h6>
+            </div>
+            <div class="card-body" id="veiculoInfo">
+                <p class="text-muted">Selecione um veículo para ver as informações</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function() {
+            // Mostrar/ocultar alertas de validação
+            function toggleValidationSummary() {
+                const validationSummary = $('[data-valmsg-summary="true"]');
+                const hasErrors = validationSummary.find('li').length > 0;
+                if (hasErrors) {
+                    validationSummary.show();
+                } else {
+                    validationSummary.hide();
+                }
+            }
+
+            // Auto-dismiss alerts
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+
+            // Buscar preço do veículo quando selecionado
+            $("#VeiculoId").change(function () {
+                const veiculoId = $(this).val();
+                const precoInput = $("#PrecoVenda");
+                const veiculoInfoDiv = $("#veiculoInfo");
+
+                if (veiculoId) {
+                    // Mostrar loading
+                    precoInput.val("").attr("placeholder", "Carregando...");
+                    veiculoInfoDiv.html('<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Carregando...</span></div> Carregando informações...');
+
+                    // Fazer requisição
+                    $.getJSON("/Venda/GetPrecoVeiculo", { id: veiculoId })
+                        .done(function (data) {
+                            if (data.success) {
+                                precoInput.val(data.preco).attr("placeholder", "0,00");
+                                veiculoInfoDiv.html(`
+                                    <p><strong>Preço do Veículo:</strong> R$ ${data.preco.toFixed(2).replace('.', ',')}</p>
+                                    <small class="text-muted">Você pode ajustar o preço de venda conforme necessário.</small>
+                                `);
+                            } else {
+                                precoInput.val("").attr("placeholder", "Erro ao carregar preço");
+                                veiculoInfoDiv.html(`<p class="text-danger">${data.message}</p>`);
+                            }
+                        })
+                        .fail(function() {
+                            precoInput.val("").attr("placeholder", "Erro ao carregar preço");
+                            veiculoInfoDiv.html('<p class="text-danger">Erro ao carregar informações do veículo</p>');
+                        });
+                } else {
+                    precoInput.val("").attr("placeholder", "0,00");
+                    veiculoInfoDiv.html('<p class="text-muted">Selecione um veículo para ver as informações</p>');
+                }
+            });
+
+            // Submeter formulário com loading
+            $("#vendaForm").submit(function() {
+                const submitBtn = $("#btnSubmit");
+                submitBtn.prop("disabled", true)
+                        .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...');
+
+                // Re-habilitar se houver erro de validação
+                setTimeout(function() {
+                    if (!$("#vendaForm").valid()) {
+                        submitBtn.prop("disabled", false)
+                                .html('<i class="fas fa-save"></i> Finalizar Venda');
+                        toggleValidationSummary();
+                    }
+                }, 100);
+            });
+
+            // Formatação de CPF
+            $("#ClienteCPF").mask("000.000.000-00");
+
+            // Formatação de telefone
+            $("#ClienteTelefone").mask("(00) 00000-0000");
+
+            toggleValidationSummary();
+        });
+    </script>
+}

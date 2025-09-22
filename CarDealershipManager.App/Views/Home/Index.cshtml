@@ -1,0 +1,223 @@
+﻿@model IEnumerable<CarDealershipManager.Core.DTOs.VendaDTO>
+@{
+    ViewData["Title"] = "Dashboard";
+    var dashboard = ViewBag.Dashboard;
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+        <p class="lead">Visão geral do sistema de concessionárias</p>
+    </div>
+</div>
+
+<!-- Cards de Métricas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>@dashboard.TotalVendasMes</h4>
+                        <p class="mb-0">Vendas este mês</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-cart-check-fill fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>@dashboard.ValorTotalMes.ToString("C")</h4>
+                        <p class="mb-0">Faturamento mensal</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-currency-dollar fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>@dashboard.TotalVeiculos</h4>
+                        <p class="mb-0">Veículos cadastrados</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-car-front-fill fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>@dashboard.TotalConcessionarias</h4>
+                        <p class="mb-0">Concessionárias ativas</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-shop fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráfico de Vendas -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-graph-up"></i> Vendas dos Últimos 6 Meses</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="vendasChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-pie-chart"></i> Vendas por Fabricante</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="fabricantesChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimas Vendas -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="bi bi-clock-history"></i> Últimas Vendas</h5>
+                <a href="@Url.Action("Index", "Venda")" class="btn btn-outline-primary btn-sm">
+                    Ver todas <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                @if (Model.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Protocolo</th>
+                                    <th>Cliente</th>
+                                    <th>Veículo</th>
+                                    <th>Concessionária</th>
+                                    <th>Data</th>
+                                    <th>Valor</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var venda in Model)
+                                {
+                                    <tr>
+                                        <td><span class="badge bg-primary">@venda.ProtocoloVenda</span></td>
+                                        <td>
+                                            <strong>@venda.ClienteNome</strong><br>
+                                            <small class="text-muted">@venda.CPFCliente</small>
+                                        </td>
+                                        <td>
+                                            <strong>@venda.VeiculoModelo</strong><br>
+                                            <small class="text-muted">@venda.FabricanteNome</small>
+                                        </td>
+                                        <td>@venda.ConcessionariaNome</td>
+                                        <td>@venda.DataVenda.ToString("dd/MM/yyyy")</td>
+                                        <td><span class="text-success fw-bold">@venda.PrecoVenda.ToString("C")</span></td>
+                                        <td>
+                                            <a href="@Url.Action("Details", "Venda", new { id = venda.Id })"
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="bi bi-cart-x fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhuma venda encontrada</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Gráfico de Vendas
+        const ctxVendas = document.getElementById('vendasChart').getContext('2d');
+        new Chart(ctxVendas, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                datasets: [{
+                    label: 'Vendas',
+                    data: [12, 19, 3, 5, 2, 3],
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // Gráfico de Fabricantes
+        const ctxFabricantes = document.getElementById('fabricantesChart').getContext('2d');
+        new Chart(ctxFabricantes, {
+            type: 'doughnut',
+            data: {
+                labels: ['Toyota', 'Volkswagen', 'Ford', 'Outros'],
+                datasets: [{
+                    data: [30, 25, 20, 25],
+                    backgroundColor: [
+                        '#FF6384',
+                        '#36A2EB',
+                        '#FFCE56',
+                        '#4BC0C0'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+}
