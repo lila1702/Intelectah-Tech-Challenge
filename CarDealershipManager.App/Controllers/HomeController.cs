@@ -1,8 +1,6 @@
-using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using CarDealershipManager.App.Models;
 using CarDealershipManager.Core.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CarDealershipManager.App.Controllers;
 

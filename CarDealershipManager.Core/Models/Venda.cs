@@ -1,3 +1,4 @@
+using CarDealershipManager.Core.Validations;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -24,7 +25,9 @@ namespace CarDealershipManager.Core.Models
         public int ClienteId { get; set; }
 
         [Required]
+        [ValidateDate(ErrorMessage = "A venda não pode ser futura")]
         [Display(Name = "Data da Venda")]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
         [Column("Data_Venda")]
         public DateTime DataVenda { get; set; }
 

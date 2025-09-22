@@ -42,6 +42,8 @@ namespace CarDealershipManager.Infrastructure.Services
             var veiculo = _mapper.Map<Veiculo>(veiculoDTO);
             await _veiculoRepository.AddAsync(veiculo);
 
+            await InvalidateCacheAsync(veiculo);
+
             return _mapper.Map<VeiculoDTO>(await _veiculoRepository.GetByIdAsync(veiculo.Id));
         }
 
@@ -67,21 +69,39 @@ namespace CarDealershipManager.Infrastructure.Services
             _mapper.Map(veiculoDTO, veiculo);
             await _veiculoRepository.UpdateAsync(veiculo);
 
-            await _cacheService.RemoveAsync($"veiculo_{id}");
+            await InvalidateCacheAsync(veiculo);
 
             return _mapper.Map<VeiculoDTO>(await _veiculoRepository.GetByIdAsync(id));
         }
 
         public async Task DeleteAsync(int id)
         {
+            var veiculo = await _veiculoRepository.GetByIdAsync(id);
+            if (veiculo == null)
+            {
+                throw new ArgumentException("Veículo não encontrado");
+            }
+
             await _veiculoRepository.DeleteByIdAsync(id);
-            await _cacheService.RemoveAsync($"veiculo_{id}");
+            await InvalidateCacheAsync(veiculo, id);
         }
 
         public async Task<IEnumerable<VeiculoDTO>> GetAllAsync()
         {
+            var cacheKey = "veiculos_all";
+            var cached = await _cacheService.GetAsync<IEnumerable<VeiculoDTO>>(cacheKey);
+
+            if (cached != null)
+            {
+                return cached;
+            }
+
             var veiculos = await _veiculoRepository.GetAllAsync();
-            return _mapper.Map<IEnumerable<VeiculoDTO>>(veiculos);
+            var veiculosDTO = _mapper.Map<IEnumerable<VeiculoDTO>>(veiculos);
+
+            await _cacheService.SetAsync(cacheKey, veiculosDTO, TimeSpan.FromMinutes(15));
+
+            return veiculosDTO;
         }
 
         public async Task<VeiculoDTO> GetByIdAsync(int id)
@@ -108,20 +128,64 @@ namespace CarDealershipManager.Infrastructure.Services
 
         public async Task<IEnumerable<VeiculoDTO>> GetByFabricanteIdAsync(int fabricanteId)
         {
+            var cacheKey = $"veiculos_fabricante_{fabricanteId}";
+            var cached = await _cacheService.GetAsync<IEnumerable<VeiculoDTO>>(cacheKey);
+
+            if (cached != null)
+            {
+                return cached;
+            }
+
             var veiculos = await _veiculoRepository.GetByFabricanteIdAsync(fabricanteId);
-            return _mapper.Map<IEnumerable<VeiculoDTO>>(veiculos);
+            var veiculosDTO = _mapper.Map<IEnumerable<VeiculoDTO>>(veiculos);
+
+            await _cacheService.SetAsync(cacheKey, veiculosDTO, TimeSpan.FromMinutes(10));
+
+            return veiculosDTO;
         }
 
         public async Task<IEnumerable<VeiculoDTO>> GetByTipoAsync(TipoVeiculo tipoVeiculo)
         {
+            var cacheKey = $"veiculos_tipo_{tipoVeiculo}";
+            var cached = await _cacheService.GetAsync<IEnumerable<VeiculoDTO>>(cacheKey);
+
+            if (cached != null)
+            {
+                return cached;
+            }
+
             var veiculos = await _veiculoRepository.GetByTipoAsync(tipoVeiculo);
-            return _mapper.Map<IEnumerable<VeiculoDTO>>(veiculos);
+            var veiculosDTO = _mapper.Map<IEnumerable<VeiculoDTO>>(veiculos);
+
+            await _cacheService.SetAsync(cacheKey, veiculosDTO, TimeSpan.FromMinutes(10));
+
+            return veiculosDTO;
         }
 
         public async Task<IEnumerable<VeiculoDTO>> SearchByModeloAsync(string modelo)
         {
+            var cacheKey = $"veiculos_modelo_{modelo.ToLower()}";
+            var cached = await _cacheService.GetAsync<IEnumerable<VeiculoDTO>>(cacheKey);
+
+            if (cached != null)
+            {
+                return cached;
+            }
+
             var veiculos = await _veiculoRepository.SearchByModeloAsync(modelo);
-            return _mapper.Map<IEnumerable<VeiculoDTO>>(veiculos);
+            var veiculosDTO = _mapper.Map<IEnumerable<VeiculoDTO>>(veiculos);
+
+            await _cacheService.SetAsync(cacheKey, veiculosDTO, TimeSpan.FromMinutes(5));
+
+            return veiculosDTO;
+        }
+
+        private async Task InvalidateCacheAsync(Veiculo veiculo, int? id = null)
+        {
+            await _cacheService.RemoveAsync("veiculos_all");
+            await _cacheService.RemoveAsync($"veiculo_{id ?? veiculo.Id}");
+            await _cacheService.RemoveAsync($"veiculos_fabricante_{veiculo.FabricanteId}");
+            await _cacheService.RemoveAsync($"veiculos_tipo_{veiculo.TipoVeiculo}");
         }
     }
 }

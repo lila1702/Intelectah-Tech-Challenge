@@ -1,151 +1,157 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using CarDealershipManager.Core.DTOs;
-using CarDealershipManager.Core.Interfaces.Services;
-using CarDealershipManager.Core.Interfaces.External;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using CarDealershipManager.Core.Models;
+using CarDealershipManager.Infrastructure.Data;
 
 namespace CarDealershipManager.App.Controllers
 {
-    [Authorize]
     public class ConcessionariaController : Controller
     {
-        private readonly IConcessionariaService _concessionariaService;
-        private readonly ICEPService _cepService;
+        private readonly ApplicationDbContext _context;
 
-        public ConcessionariaController(IConcessionariaService concessionariaService, ICEPService cepService)
+        public ConcessionariaController(ApplicationDbContext context)
         {
-            _concessionariaService = concessionariaService;
-            _cepService = cepService;
+            _context = context;
         }
 
+        // GET: Concessionaria
         public async Task<IActionResult> Index()
         {
-            var concessionarias = await _concessionariaService.GetAllAsync();
-            return View(concessionarias);
+            return View(await _context.Concessionarias.ToListAsync());
         }
 
-        public async Task<IActionResult> Details(int id)
+        // GET: Concessionaria/Details/5
+        public async Task<IActionResult> Details(int? id)
         {
-            try
-            {
-                var concessionaria = await _concessionariaService.GetByIdAsync(id);
-                return View(concessionaria);
-            }
-            catch (ArgumentException)
+            if (id == null)
             {
                 return NotFound();
             }
+
+            var concessionaria = await _context.Concessionarias
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (concessionaria == null)
+            {
+                return NotFound();
+            }
+
+            return View(concessionaria);
         }
 
-        [Authorize(Roles = "Administrador")]
+        // GET: Concessionaria/Create
         public IActionResult Create()
         {
             return View();
         }
 
+        // POST: Concessionaria/Create
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> Create(ConcessionariaCreateDTO concessionariaDTO)
+        public async Task<IActionResult> Create([Bind("Nome,Endereco,Cidade,Estado,CEP,Telefone,Email,CapacidadeMaximaVeiculos,Id")] Concessionaria concessionaria)
         {
+            if (ModelState.IsValid)
+            {
+                _context.Add(concessionaria);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(concessionaria);
+        }
+
+        // GET: Concessionaria/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var concessionaria = await _context.Concessionarias.FindAsync(id);
+            if (concessionaria == null)
+            {
+                return NotFound();
+            }
+            return View(concessionaria);
+        }
+
+        // POST: Concessionaria/Edit/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("Nome,Endereco,Cidade,Estado,CEP,Telefone,Email,CapacidadeMaximaVeiculos,Id")] Concessionaria concessionaria)
+        {
+            if (id != concessionaria.Id)
+            {
+                return NotFound();
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    await _concessionariaService.CreateAsync(concessionariaDTO);
-                    TempData["Success"] = "Concessionária criada com sucesso!";
-                    return RedirectToAction(nameof(Index));
+                    _context.Update(concessionaria);
+                    await _context.SaveChangesAsync();
                 }
-                catch (ArgumentException ex)
+                catch (DbUpdateConcurrencyException)
                 {
-                    ModelState.AddModelError("", ex.Message);
+                    if (!ConcessionariaExists(concessionaria.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
-            }
-
-            return View(concessionariaDTO);
-        }
-
-        [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> Edit(int id)
-        {
-            try
-            {
-                var concessionaria = await _concessionariaService.GetByIdAsync(id);
-                var concessionariaDTO = new ConcessionariaUpdateDTO
-                {
-                    Nome = concessionaria.Nome,
-                    Endereco = concessionaria.Endereco,
-                    Cidade = concessionaria.Cidade,
-                    Estado = concessionaria.Estado,
-                    CEP = concessionaria.CEP,
-                    Telefone = concessionaria.Telefone,
-                    Email = concessionaria.Email,
-                    CapacidadeMaximaVeiculos = concessionaria.CapacidadeMaximaVeiculos
-                };
-                return View(concessionariaDTO);
-
-            }
-            catch (ArgumentException)
-            {
-                return NotFound();
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> Edit(int id, ConcessionariaUpdateDTO concessionariaDTO)
-        {
-            try
-            {
-                await _concessionariaService.UpdateAsync(id, concessionariaDTO);
-                TempData["Success"] = "Concessionária atualizada com sucesso!";
                 return RedirectToAction(nameof(Index));
             }
-            catch (ArgumentException ex)
-            {
-                ModelState.AddModelError("", ex.Message);
-            }
-
-            return View(concessionariaDTO);
+            return View(concessionaria);
         }
 
-        [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> Delete(int id)
+        // GET: Concessionaria/Delete/5
+        public async Task<IActionResult> Delete(int? id)
         {
-            try
-            {
-                var concessionaria = await _concessionariaService.GetByIdAsync(id);
-                return View(concessionaria);
-            }
-            catch (ArgumentException)
+            if (id == null)
             {
                 return NotFound();
             }
+
+            var concessionaria = await _context.Concessionarias
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (concessionaria == null)
+            {
+                return NotFound();
+            }
+
+            return View(concessionaria);
         }
 
+        // POST: Concessionaria/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            await _concessionariaService.DeleteAsync(id);
-            TempData["Success"] = "Concessionária excluida com sucesso!";
+            var concessionaria = await _context.Concessionarias.FindAsync(id);
+            if (concessionaria != null)
+            {
+                _context.Concessionarias.Remove(concessionaria);
+            }
+
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        [HttpGet]
-        public async Task<IActionResult> BuscarEnderecoPorCep(string cep)
+        private bool ConcessionariaExists(int id)
         {
-            var endereco = await _cepService.BuscarEnderecoPorCEPAsync(cep);
-            return Json(endereco);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> SearchByNome(string nome)
-        {
-            var concessionarias = await _concessionariaService.GetByNomeAsync(nome);
-            return Json(concessionarias.Select(c => new { value = c.Id, text = c.Nome }));
+            return _context.Concessionarias.Any(e => e.Id == id);
         }
     }
 }

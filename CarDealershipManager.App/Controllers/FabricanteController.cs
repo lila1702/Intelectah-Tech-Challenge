@@ -1,132 +1,165 @@
-ï»¿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using CarDealershipManager.Core.DTOs;
-using CarDealershipManager.Core.Interfaces.Services;
+using CarDealershipManager.Core.Models;
+using CarDealershipManager.Infrastructure.Data;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CarDealershipManager.App.Controllers
 {
-    [Authorize]
     public class FabricanteController : Controller
     {
-        private readonly IFabricanteService _fabricanteService;
+        private readonly ApplicationDbContext _context;
 
-        public FabricanteController(IFabricanteService fabricanteService)
+        public FabricanteController(ApplicationDbContext context)
         {
-            _fabricanteService = fabricanteService;
+            _context = context;
         }
 
+        // GET: Fabricante
         public async Task<IActionResult> Index()
         {
-            var fabricantes = await _fabricanteService.GetAllAsync();
-            return View(fabricantes);
+            return View(await _context.Fabricantes.ToListAsync());
         }
 
-        public async Task<IActionResult> Details(int id)
+        // GET: Fabricante/Details/5
+        public async Task<IActionResult> Details(int? id)
         {
-            try
-            {
-                var fabricantes = await _fabricanteService.GetByIdAsync(id);
-                return View(fabricantes);
-            }
-            catch (ArgumentException)
+            if (id == null)
             {
                 return NotFound();
             }
+
+            var fabricante = await _context.Fabricantes
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (fabricante == null)
+            {
+                return NotFound();
+            }
+
+            return View(fabricante);
         }
 
-        [Authorize(Roles = "Administrador")]
+        // GET: Fabricante/Create
         public IActionResult Create()
         {
             return View();
         }
 
+        // POST: Fabricante/Create
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> Create(FabricanteCreateDTO fabricanteDTO)
+        public async Task<IActionResult> Create([Bind("Nome,PaisOrigem,AnoFundacao,Website")] Fabricante fabricante)
         {
+            if (_context.Fabricantes.Any(f => f.Nome == fabricante.Nome && !f.IsDeleted))
+            {
+                ModelState.AddModelError("Nome", "Já existe um fabricante ativo com este nome.");
+                return View(fabricante);
+            }
+
+            if (ModelState.IsValid)
+            {
+                _context.Add(fabricante);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(fabricante);
+        }
+
+        // GET: Fabricante/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var fabricante = await _context.Fabricantes.FindAsync(id);
+            if (fabricante == null)
+            {
+                return NotFound();
+            }
+            return View(fabricante);
+        }
+
+        // POST: Fabricante/Edit/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("Nome,PaisOrigem,AnoFundacao,Website,Id")] Fabricante fabricante)
+        {
+            if (id != fabricante.Id)
+            {
+                return NotFound();
+            }
+
+            if (_context.Fabricantes.Any(f => f.Nome == fabricante.Nome && !f.IsDeleted && f.Id != fabricante.Id))
+            {
+                ModelState.AddModelError("Nome", "Já existe um fabricante ativo com este nome.");
+                return View(fabricante);
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    await _fabricanteService.CreateAsync(fabricanteDTO);
-                    TempData["Sucess"] = "Fabricante criado com sucesso.";
-                    return RedirectToAction(nameof(Index));
+                    _context.Update(fabricante);
+                    await _context.SaveChangesAsync();
                 }
-                catch (ArgumentException ex)
+                catch (DbUpdateConcurrencyException)
                 {
-                    ModelState.AddModelError("", ex.Message);
+                    if (!FabricanteExists(fabricante.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
+                return RedirectToAction(nameof(Index));
             }
-
-            return View(fabricanteDTO);
+            return View(fabricante);
         }
 
-        [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> Edit(int id)
+        // GET: Fabricante/Delete/5
+        public async Task<IActionResult> Delete(int? id)
         {
-            try
-            {
-                var fabricante = await _fabricanteService.GetByIdAsync(id);
-                var fabricanteDTO = new FabricanteUpdateDTO
-                {
-                    Nome = fabricante.Nome,
-                    PaisOrigem = fabricante.PaisOrigem,
-                    AnoFundacao = fabricante.AnoFundacao,
-                    Website = fabricante.Website
-                };
-                return View(fabricante);
-            }
-            catch (ArgumentException)
+            if (id == null)
             {
                 return NotFound();
             }
-        }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> Edit(int id, FabricanteUpdateDTO fabricanteDTO)
-        {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    await _fabricanteService.UpdateAsync(id, fabricanteDTO);
-                    TempData["Sucess"] = "Fabricante atualizado com sucesso.";
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (ArgumentException ex)
-                {
-                    ModelState.AddModelError("", ex.Message);
-                }
-            }
-
-            return View(fabricanteDTO);
-        }
-
-        [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var fabricante = await _fabricanteService.GetByIdAsync(id);
-                return View(fabricante);
-            }
-            catch (ArgumentException)
+            var fabricante = await _context.Fabricantes
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (fabricante == null)
             {
                 return NotFound();
             }
+
+            return View(fabricante);
         }
 
+        // POST: Fabricante/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            await _fabricanteService.DeleteAsync(id);
-            TempData["Success"] = "Fabricante excluÃ­do com sucesso";
+            var fabricante = await _context.Fabricantes.FindAsync(id);
+            if (fabricante != null)
+            {
+                fabricante.IsDeleted = true;
+                _context.Update(fabricante);
+                await _context.SaveChangesAsync();
+            }
+
             return RedirectToAction(nameof(Index));
+        }
+
+        private bool FabricanteExists(int id)
+        {
+            return _context.Fabricantes.Any(e => e.Id == id);
         }
     }
 }

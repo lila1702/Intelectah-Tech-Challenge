@@ -1,171 +1,181 @@
-﻿using CarDealershipManager.Core.DTOs;
-using CarDealershipManager.Core.Enums;
-using CarDealershipManager.Core.Interfaces.Services;
-using Microsoft.AspNetCore.Authorization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Globalization;
+using Microsoft.EntityFrameworkCore;
+using CarDealershipManager.Core.Models;
+using CarDealershipManager.Infrastructure.Data;
 
 namespace CarDealershipManager.App.Controllers
 {
-    [Authorize]
     public class VeiculoController : Controller
     {
-        private readonly IVeiculoService _veiculoService;
-        private readonly IFabricanteService _fabricanteService;
+        private readonly ApplicationDbContext _context;
 
-        public VeiculoController(IVeiculoService veiculoService, IFabricanteService fabricanteService)
+        public VeiculoController(ApplicationDbContext context)
         {
-            _veiculoService = veiculoService;
-            _fabricanteService = fabricanteService;
+            _context = context;
         }
 
+        // GET: Veiculo
         public async Task<IActionResult> Index()
         {
-            var veiculos = await _veiculoService.GetAllAsync();
-            return View(veiculos);
+            var applicationDbContext = _context.Veiculos.Include(v => v.Fabricante);
+            return View(await applicationDbContext.ToListAsync());
         }
 
-        public async Task<IActionResult> Details(int id)
+        // GET: Veiculo/Details/5
+        public async Task<IActionResult> Details(int? id)
         {
-            try
-            {
-                var veiculo = await _veiculoService.GetByIdAsync(id);
-                return View(veiculo);
-            }
-            catch (ArgumentException)
+            if (id == null)
             {
                 return NotFound();
             }
+
+            var veiculo = await _context.Veiculos
+                .Include(v => v.Fabricante)
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (veiculo == null)
+            {
+                return NotFound();
+            }
+
+            return View(veiculo);
         }
 
-        [Authorize(Roles = "Administrador, Gerente")]
-        public async Task<IActionResult> Create()
+        // GET: Veiculo/Create
+        public IActionResult Create()
         {
-            await CarregarFabricantes();
-            CarregarTiposVeiculos();
+            ViewData["FabricanteId"] = new SelectList(_context.Fabricantes, "Id", "Nome");
             return View();
         }
 
+        // POST: Veiculo/Create
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrador, Gerente")]
-        public async Task<IActionResult> Create(VeiculoCreateDTO veiculoDTO)
+        public async Task<IActionResult> Create([Bind("Modelo,AnoFabricacao,Preco,FabricanteId,TipoVeiculo,Descricao,Id")] Veiculo veiculo)
         {
+            if (!_context.Fabricantes.Any(f => f.Id == veiculo.FabricanteId && !f.IsDeleted))
+            {
+                ModelState.AddModelError("FabricanteId", "Selecione um fabricante v�lido.");
+            }
+
+            if (ModelState.IsValid)
+            {
+                _context.Add(veiculo);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            ViewData["FabricanteId"] = new SelectList(_context.Fabricantes, "Id", "Nome", veiculo.FabricanteId);
+            return View(veiculo);
+        }
+
+        // GET: Veiculo/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var veiculo = await _context.Veiculos.FindAsync(id);
+            if (veiculo == null)
+            {
+                return NotFound();
+            }
+            ViewData["FabricanteId"] = new SelectList(_context.Fabricantes, "Id", "Nome", veiculo.FabricanteId);
+            return View(veiculo);
+        }
+
+        // POST: Veiculo/Edit/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("Modelo,AnoFabricacao,Preco,FabricanteId,TipoVeiculo,Descricao,Id")] Veiculo veiculo)
+        {
+            if (id != veiculo.Id)
+            {
+                return NotFound();
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    await _veiculoService.CreateAsync(veiculoDTO);
-                    TempData["Success"] = "Veículo criado com sucesso!";
-                    return RedirectToAction(nameof(Index));
+                    _context.Update(veiculo);
+                    await _context.SaveChangesAsync();
                 }
-                catch (ArgumentException ex)
+                catch (DbUpdateConcurrencyException)
                 {
-                    ModelState.AddModelError("", ex.Message);
+                    if (!VeiculoExists(veiculo.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
+                return RedirectToAction(nameof(Index));
             }
-
-            await CarregarFabricantes();
-            CarregarTiposVeiculos();
-            return View(veiculoDTO);
+            ViewData["FabricanteId"] = new SelectList(_context.Fabricantes, "Id", "Nome", veiculo.FabricanteId);
+            return View(veiculo);
         }
 
-        [Authorize(Roles = "Administrador, Gerente")]
-        public async Task<IActionResult> Edit(int id)
+        // GET: Veiculo/Delete/5
+        public async Task<IActionResult> Delete(int? id)
         {
-            try
-            {
-                var veiculo = await _veiculoService.GetByIdAsync(id);
-                var veiculoDTO = new VeiculoUpdateDTO
-                {
-                    Modelo = veiculo.Modelo,
-                    AnoFabricacao = veiculo.AnoFabricacao,
-                    Preco = veiculo.Preco,
-                    FabricanteId = veiculo.FabricanteId,
-                    TipoVeiculo = veiculo.TipoVeiculo,
-                    Descricao = veiculo.Descricao
-                };
-
-                await CarregarFabricantes();
-                CarregarTiposVeiculos();
-                return View(veiculoDTO);
-
-            }
-            catch (ArgumentException)
+            if (id == null)
             {
                 return NotFound();
             }
-        }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrador, Gerente")]
-        public async Task<IActionResult> Edit(int id, VeiculoUpdateDTO veiculoDTO)
-        {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    await _veiculoService.UpdateAsync(id, veiculoDTO);
-                    TempData["Success"] = "Veículo atualizado com sucesso!";
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (ArgumentException ex)
-                {
-                    ModelState.AddModelError("", ex.Message);
-                }
-            }
-
-            await CarregarFabricantes();
-            CarregarTiposVeiculos();
-            return View(veiculoDTO);
-        }
-
-        [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var veiculo = await _veiculoService.GetByIdAsync(id);
-                return View(veiculo);
-            }
-            catch (ArgumentException)
+            var veiculo = await _context.Veiculos
+                .Include(v => v.Fabricante)
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (veiculo == null)
             {
                 return NotFound();
             }
+
+            return View(veiculo);
         }
 
+        // POST: Veiculo/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            await _veiculoService.DeleteAsync(id);
-            TempData["Success"] = "Veículo excluído com sucesso!";
+            var veiculo = await _context.Veiculos.FindAsync(id);
+            if (veiculo != null)
+            {
+                _context.Veiculos.Remove(veiculo);
+            }
+
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
+        private bool VeiculoExists(int id)
+        {
+            return _context.Veiculos.Any(e => e.Id == id);
+        }
+
         [HttpGet]
-        public async Task<IActionResult> GetVeiculosByFabricante(int fabricanteId)
+        public JsonResult SearchFabricante(string term)
         {
-            var veiculos = await _veiculoService.GetByFabricanteIdAsync(fabricanteId);
-            return Json(veiculos.Select(v => new { value = v.Id, text = $"{v.Modelo} - {v.Preco.ToString("C", new CultureInfo("pt-BR"))}" }));
-        }
+            var fabricantes = _context.Fabricantes
+                .Where(f => !f.IsDeleted && f.Nome.Contains(term))
+                .Select(f => new { id = f.Id, label = f.Nome, value = f.Nome })
+                .Take(10)
+                .ToList();
 
-        private async Task CarregarFabricantes()
-        {
-            var fabricantes = await _fabricanteService.GetAllAsync();
-            ViewBag.Fabricantes = new SelectList(fabricantes, "Id", "Nome");
+            return Json(fabricantes);
         }
-
-        private void CarregarTiposVeiculos()
-        {
-            ViewBag.TiposVeiculos = new SelectList(Enum.GetValues(typeof(TipoVeiculo))
-                                                       .Cast<TipoVeiculo>()
-                                                       .Select(v => new {Value = (int)v, Text = v.ToString()}),
-                                                       "Value", "Text");
-        }
-
     }
 }
