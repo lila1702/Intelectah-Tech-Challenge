@@ -2,13 +2,40 @@ using Microsoft.AspNetCore.Identity;
 using CarDealershipManager.Infrastructure;
 using CarDealershipManager.Infrastructure.Data;
 using CarDealershipManager.Infrastructure.Identity;
+using Microsoft.EntityFrameworkCore;
+using CarDealershipManager.Infrastructure.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Banco de Dados
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+// Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
+    options.User.RequireUniqueEmail = true;
+}).AddRoles<IdentityRole>()
+  .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Redis
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "CarDealershipManager_";
+});
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructure();
+builder.Services.AddRazorPages();
 
 // Swagger API Documentation
 builder.Services.AddEndpointsApiExplorer();
@@ -23,8 +50,6 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CarDealershipManager API v1"));
     app.UseMigrationsEndPoint();
 }
 else
@@ -32,7 +57,11 @@ else
     app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
+
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CarDealershipManager API v1"));
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -61,7 +90,7 @@ app.Run();
 
 static async Task SeedDatabase(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
 {
-    context.Database.EnsureCreated();
+    await context.Database.MigrateAsync();
 
     // Create default roles
     var roles = new[] { "Administrador", "Gerente", "Vendedor" };

@@ -48,7 +48,7 @@ namespace CarDealershipManager.Infrastructure.Services
 
         public async Task<IEnumerable<ConcessionariaDTO>> GetAllAsync()
         {
-            var cacheKey = "concecionarias_all";
+            var cacheKey = "concessionarias_all";
             var cached = await _cacheService.GetAsync<IEnumerable<ConcessionariaDTO>>(cacheKey);
 
             if (cached != null)

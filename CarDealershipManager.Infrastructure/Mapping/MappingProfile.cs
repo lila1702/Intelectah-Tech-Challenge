@@ -38,7 +38,7 @@ namespace CarDealershipManager.Infrastructure.Mapping
                 .ForMember(dest => dest.FabricanteNome, opt => opt.MapFrom(src => src.Veiculo.Fabricante.Nome))
                 .ForMember(dest => dest.ConcessionariaNome, opt => opt.MapFrom(src => src.Concessionaria.Nome))
                 .ForMember(dest => dest.ClienteNome, opt => opt.MapFrom(src => src.Cliente.Nome))
-                .ForMember(dest => dest.ClienteNome, opt => opt.MapFrom(src => src.Cliente.CPF));
+                .ForMember(dest => dest.CPFCliente, opt => opt.MapFrom(src => src.Cliente.CPF));
         }
     }
 }

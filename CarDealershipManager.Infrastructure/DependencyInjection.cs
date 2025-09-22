@@ -1,14 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using CarDealershipManager.Core.Interfaces;
+﻿using CarDealershipManager.Core.Interfaces;
 using CarDealershipManager.Core.Interfaces.External;
 using CarDealershipManager.Core.Interfaces.Services;
-using CarDealershipManager.Infrastructure.Data;
-using CarDealershipManager.Infrastructure.Identity;
 using CarDealershipManager.Infrastructure.Mapping;
 using CarDealershipManager.Infrastructure.Repositories;
 using CarDealershipManager.Infrastructure.Services;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CarDealershipManager.Infrastructure
 {
