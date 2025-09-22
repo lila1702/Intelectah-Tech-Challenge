@@ -42,7 +42,7 @@ namespace CarDealershipManager.Infrastructure.Repositories
 
             do
             {
-                var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff");
+                var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
                 var random = new Random().Next(1000, 9999);
                 protocolo = $"{timestamp}{random}";
 

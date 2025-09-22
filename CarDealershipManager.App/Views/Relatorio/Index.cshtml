@@ -1,0 +1,99 @@
+﻿@{
+    ViewData["Title"] = "Relatórios de Vendas";
+}
+
+<h1><i class="bi bi-graph-up"></i> Relatórios de Vendas</h1>
+
+<div class="row mb-3">
+    <div class="col-md-3">
+        <label for="mes">Mês</label>
+        <select id="mes" class="form-control">
+            @for (int i = 1; i <= 12; i++)
+            {
+                <option value="@i">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label for="ano">Ano</label>
+        <input type="number" id="ano" class="form-control" value="@DateTime.Now.Year" />
+    </div>
+    <div class="col-md-3 align-self-end">
+        <button id="btnBuscar" class="btn btn-primary w-100">
+            <i class="bi bi-search"></i> Buscar
+        </button>
+    </div>
+</div>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-bar-chart"></i> Vendas por Tipo de Veículo</div>
+            <div class="card-body">
+                <canvas id="chartTipos"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-pie-chart"></i> Vendas por Fabricante</div>
+            <div class="card-body">
+                <canvas id="chartFabricantes"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr />
+
+<div id="resumo" class="mt-4"></div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let chartTipos, chartFabricantes;
+
+        document.getElementById("btnBuscar").addEventListener("click", async () => {
+            const mes = document.getElementById("mes").value;
+            const ano = document.getElementById("ano").value;
+
+            const response = await fetch(`/Relatorio/VendasPorPeriodo?mes=${mes}&ano=${ano}`);
+            const data = await response.json();
+
+            // Atualiza resumo
+            document.getElementById("resumo").innerHTML = `
+                <h4>Resumo ${mes}/${ano}</h4>
+                <p>Total de Vendas: <strong>${data.totalVendas}</strong></p>
+                <p>Valor Total: <strong>${data.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong></p>
+            `;
+
+            // Gráfico Tipos
+            const tiposLabels = data.vendasPorTipo.map(x => x.tipo);
+            const tiposData = data.vendasPorTipo.map(x => x.quantidade);
+
+            if (chartTipos) chartTipos.destroy();
+            chartTipos = new Chart(document.getElementById("chartTipos"), {
+                type: 'bar',
+                data: {
+                    labels: tiposLabels,
+                    datasets: [{ label: "Qtd. Vendas", data: tiposData, backgroundColor: '#36A2EB' }]
+                }
+            });
+
+            // Gráfico Fabricantes
+            const fabLabels = data.vendasPorFabricante.map(x => x.fabricante);
+            const fabData = data.vendasPorFabricante.map(x => x.quantidade);
+
+            if (chartFabricantes) chartFabricantes.destroy();
+            chartFabricantes = new Chart(document.getElementById("chartFabricantes"), {
+                type: 'doughnut',
+                data: {
+                    labels: fabLabels,
+                    datasets: [{ data: fabData, backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0'] }]
+                }
+            });
+        });
+    </script>
+}

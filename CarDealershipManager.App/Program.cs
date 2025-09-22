@@ -1,9 +1,11 @@
-using Microsoft.AspNetCore.Identity;
 using CarDealershipManager.Infrastructure;
 using CarDealershipManager.Infrastructure.Data;
 using CarDealershipManager.Infrastructure.Identity;
-using Microsoft.EntityFrameworkCore;
 using CarDealershipManager.Infrastructure.Mapping;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,7 +31,15 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("Redis");
-    options.InstanceName = "CarDealershipManager_";
+    options.ConfigurationOptions = new ConfigurationOptions
+    {
+        EndPoints = { "localhost:6379" },
+        ConnectTimeout = 5000,
+        SyncTimeout = 5000,
+        ConnectRetry = 3,
+        ReconnectRetryPolicy = new ExponentialRetry(1000),
+        AbortOnConnectFail = false
+    };
 });
 
 // Add services to the container.
@@ -45,6 +55,15 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+// Cultura para pt-BR
+var supportedCultures = new[] { new CultureInfo("pt-BR") };
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("pt-BR"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -123,6 +142,54 @@ static async Task SeedDatabase(ApplicationDbContext context, UserManager<Applica
         if (result.Succeeded)
         {
             await userManager.AddToRoleAsync(adminUser, "Administrador");
+        }
+    }
+
+    // Create default manager user
+    var gerenteEmail = "gerente@cardealership.com";
+    var gerenteUser = await userManager.FindByEmailAsync(gerenteEmail);
+
+    if (gerenteUser == null)
+    {
+        gerenteUser = new ApplicationUser
+        {
+            UserName = gerenteEmail,
+            Email = gerenteEmail,
+            NomeCompleto = "Gerente da Concessionária",
+            NivelAcesso = CarDealershipManager.Core.Enums.NivelAcesso.Gerente,
+            EmailConfirmed = true,
+            DataCriacao = DateTime.UtcNow,
+            Ativo = true
+        };
+
+        var result = await userManager.CreateAsync(gerenteUser, "Gerente@123");
+        if (result.Succeeded)
+        {
+            await userManager.AddToRoleAsync(gerenteUser, "Gerente");
+        }
+    }
+
+    // Create default seller user
+    var vendedorEmail = "vendedor@cardealership.com";
+    var vendedorUser = await userManager.FindByEmailAsync(vendedorEmail);
+
+    if (vendedorUser == null)
+    {
+        vendedorUser = new ApplicationUser
+        {
+            UserName = vendedorEmail,
+            Email = vendedorEmail,
+            NomeCompleto = "Vendedor da Concessionária",
+            NivelAcesso = CarDealershipManager.Core.Enums.NivelAcesso.Vendedor,
+            EmailConfirmed = true,
+            DataCriacao = DateTime.UtcNow,
+            Ativo = true
+        };
+
+        var result = await userManager.CreateAsync(vendedorUser, "Vendedor@123");
+        if (result.Succeeded)
+        {
+            await userManager.AddToRoleAsync(vendedorUser, "Vendedor");
         }
     }
 }

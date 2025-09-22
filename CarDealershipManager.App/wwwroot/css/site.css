@@ -20,3 +20,7 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.logout-button {
+    color: #dc3545 !important
+}

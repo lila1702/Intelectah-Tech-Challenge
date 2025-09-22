@@ -1,0 +1,32 @@
+@model CarDealershipManager.Core.DTOs.VendaDTO
+
+@{
+    ViewData["Title"] = "Detalhes da Venda";
+}
+
+<h1>Detalhes da Venda</h1>
+<hr />
+
+<dl class="row">
+    <dt class="col-sm-2">Data da Venda</dt>
+    <dd class="col-sm-10">@Model.DataVenda.ToString("dd/MM/yyyy")</dd>
+
+    <dt class="col-sm-2">Preço</dt>
+    <dd class="col-sm-10">@Model.PrecoVenda.ToString("C")</dd>
+
+    <dt class="col-sm-2">Protocolo</dt>
+    <dd class="col-sm-10">@Model.ProtocoloVenda</dd>
+
+    <dt class="col-sm-2">Veículo</dt>
+    <dd class="col-sm-10">@Model.VeiculoModelo (@Model.FabricanteNome)</dd>
+
+    <dt class="col-sm-2">Concessionária</dt>
+    <dd class="col-sm-10">@Model.ConcessionariaNome</dd>
+
+    <dt class="col-sm-2">Cliente</dt>
+    <dd class="col-sm-10">@Model.ClienteNome - CPF: @Model.CPFCliente</dd>
+</dl>
+
+<div>
+    <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+</div>

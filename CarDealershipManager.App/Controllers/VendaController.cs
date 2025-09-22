@@ -1,84 +1,155 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Authorization;
-using CarDealershipManager.Core.DTOs;
+﻿using CarDealershipManager.Core.DTOs;
 using CarDealershipManager.Core.Interfaces.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace CarDealershipManager.App.Controllers
+public class VendaController : Controller
 {
-    [Authorize]
-    public class VendaController : Controller
+    private readonly IVendaService _vendaService;
+    private readonly IVeiculoService _veiculoService;
+    private readonly IConcessionariaService _concessionariaService;
+    private readonly ILogger<VendaController> _logger;
+
+    public VendaController(
+        IVendaService vendaService,
+        IVeiculoService veiculoService,
+        IConcessionariaService concessionariaService,
+        ILogger<VendaController> logger)
     {
-        private readonly IVendaService _vendaService;
-        private readonly IFabricanteService _fabricanteService;
-        private readonly IConcessionariaService _concessionariaService;
+        _vendaService = vendaService;
+        _veiculoService = veiculoService;
+        _concessionariaService = concessionariaService;
+        _logger = logger;
+    }
 
-        public VendaController(
-            IVendaService vendaService,
-            IFabricanteService fabricanteService,
-            IConcessionariaService concessionariaService)
-        {
-            _vendaService = vendaService;
-            _fabricanteService = fabricanteService;
-            _concessionariaService = concessionariaService;
-        }
-
-        public async Task<IActionResult> Index()
+    // GET: Venda
+    public async Task<IActionResult> Index()
+    {
+        try
         {
             var vendas = await _vendaService.GetAllAsync();
             return View(vendas);
         }
-
-        public async Task<IActionResult> Details(int id)
+        catch (Exception ex)
         {
-            try
-            {
-                var venda = await _vendaService.GetByIdAsync(id);
-                return View(venda);
-            }
-            catch (ArgumentException)
+            _logger.LogError(ex, "Erro ao carregar lista de vendas");
+            TempData["Error"] = "Erro ao carregar as vendas. Tente novamente.";
+            return View(new List<VendaDTO>());
+        }
+    }
+
+    // GET: Venda/Details/5
+    public async Task<IActionResult> Details(int id)
+    {
+        try
+        {
+            var venda = await _vendaService.GetByIdAsync(id);
+            if (venda == null)
             {
                 return NotFound();
             }
+            return View(venda);
         }
-
-        [Authorize(Roles = "Administrador, Gerente, Vendedor")]
-        public async Task<IActionResult> Create()
+        catch (Exception ex)
         {
-            await CarregarDadosFormulario();
+            _logger.LogError(ex, "Erro ao carregar detalhes da venda {VendaId}", id);
+            TempData["Error"] = "Erro ao carregar os detalhes da venda.";
+            return RedirectToAction(nameof(Index));
+        }
+    }
+
+    // GET: Venda/Create
+    public async Task<IActionResult> Create()
+    {
+        try
+        {
+            await PopulateViewDataAsync();
             return View();
         }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrador, Gerente, Vendedor")]
-        public async Task<IActionResult> Create(VendaCreateDTO vendaDTO)
+        catch (Exception ex)
         {
-            if (ModelState.IsValid)
+            _logger.LogError(ex, "Erro ao carregar página de nova venda");
+            TempData["Error"] = "Erro ao carregar o formulário. Tente novamente.";
+            return RedirectToAction(nameof(Index));
+        }
+    }
+
+    // POST: Venda/Create
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(VendaCreateDTO vendaDTO)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
             {
-                try
-                {
-                    var venda = await _vendaService.CreateAsync(vendaDTO);
-                    TempData["Success"] = $"Venda realizada com sucesso! Protocolo: {venda.ProtocoloVenda}";
-                    return RedirectToAction(nameof(Details), new { id = venda.Id });
-                }
-                catch (ArgumentException ex)
-                {
-                    ModelState.AddModelError("", ex.Message);
-                }
+                await PopulateViewDataAsync(vendaDTO);
+                return View(vendaDTO);
             }
 
-            await CarregarDadosFormulario();
+            await _vendaService.CreateAsync(vendaDTO);
+            TempData["Success"] = "Venda realizada com sucesso!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (ArgumentException ex)
+        {
+            // Erros de validação de negócio
+            _logger.LogWarning(ex, "Erro de validação ao criar venda: {Message}", ex.Message);
+            ModelState.AddModelError("", ex.Message);
+            await PopulateViewDataAsync(vendaDTO);
             return View(vendaDTO);
         }
-
-        private async Task CarregarDadosFormulario()
+        catch (InvalidOperationException ex)
         {
-            var fabricantes = await _fabricanteService.GetAllAsync();
-            var concessionarias = await _concessionariaService.GetAllAsync();
-
-            ViewBag.Fabricantes = new SelectList(fabricantes, "Id", "Nome");
-            ViewBag.Concessionarias = new SelectList(concessionarias, "Id", "Nome");
+            // Erros de operação inválida
+            _logger.LogWarning(ex, "Operação inválida ao criar venda: {Message}", ex.Message);
+            ModelState.AddModelError("", ex.Message);
+            await PopulateViewDataAsync(vendaDTO);
+            return View(vendaDTO);
         }
+        catch (Exception ex)
+        {
+            // Outros erros inesperados
+            _logger.LogError(ex, "Erro inesperado ao criar venda");
+            ModelState.AddModelError("", "Ocorreu um erro inesperado. Tente novamente.");
+            await PopulateViewDataAsync(vendaDTO);
+            return View(vendaDTO);
+        }
+    }
+
+    // GET: /Venda/GetPrecoVeiculo?id=1
+    [HttpGet]
+    public async Task<IActionResult> GetPrecoVeiculo(int id)
+    {
+        try
+        {
+            var veiculo = await _veiculoService.GetByIdAsync(id);
+            if (veiculo == null)
+            {
+                return Json(new { success = false, message = "Veículo não encontrado" });
+            }
+
+            return Json(new { success = true, preco = veiculo.Preco });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao buscar preço do veículo {VeiculoId}", id);
+            return Json(new { success = false, message = "Erro ao buscar preço do veículo" });
+        }
+    }
+
+    private async Task PopulateViewDataAsync(VendaCreateDTO vendaDTO = null)
+    {
+        ViewData["VeiculoId"] = new SelectList(
+            await _veiculoService.GetAllAsync(),
+            "Id",
+            "Modelo",
+            vendaDTO?.VeiculoId);
+
+        ViewData["ConcessionariaId"] = new SelectList(
+            await _concessionariaService.GetAllAsync(),
+            "Id",
+            "Nome",
+            vendaDTO?.ConcessionariaId);
     }
 }

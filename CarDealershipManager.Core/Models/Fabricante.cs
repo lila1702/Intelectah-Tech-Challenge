@@ -1,3 +1,4 @@
+using CarDealershipManager.Core.Validations;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -16,7 +17,7 @@ namespace CarDealershipManager.Core.Models
         public string PaisOrigem { get; set; }
 
         [Required]
-        [Range(1800, 2100, ErrorMessage = "Ano inválido")]
+        [ValidateAno(ErrorMessage = "O ano de fundação não pode ser maior que o ano atual")]
         [Column("Ano_Fundacao")]
         [Display(Name = "Ano de Fundação")]
         public int AnoFundacao { get; set; }

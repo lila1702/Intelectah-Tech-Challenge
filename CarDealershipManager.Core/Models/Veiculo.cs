@@ -1,6 +1,7 @@
+using CarDealershipManager.Core.Enums;
+using CarDealershipManager.Core.Validations;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using CarDealershipManager.Core.Enums;
 
 namespace CarDealershipManager.Core.Models
 {
@@ -11,7 +12,7 @@ namespace CarDealershipManager.Core.Models
         public string Modelo { get; set; }
 
         [Required]
-        [Range(1800, 2100, ErrorMessage = "Ano Inválido")]
+        [ValidateAno(ErrorMessage = "O ano de fabricação não pode ser maior que o ano atual")]
         [Display(Name = "Ano de Fabricação")]
         [Column("Ano_Fabricacao")]
         public int AnoFabricacao { get; set; }
@@ -22,6 +23,7 @@ namespace CarDealershipManager.Core.Models
         public decimal Preco { get; set; }
 
         [Required]
+        [ScaffoldColumn(false)]
         [ForeignKey("Fabricante")]
         [Column("Fabricante_Id")]
         public int FabricanteId { get; set; }

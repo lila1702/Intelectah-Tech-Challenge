@@ -1,4 +1,6 @@
-﻿namespace CarDealershipManager.Core.DTOs
+﻿using CarDealershipManager.Core.Validations;
+
+namespace CarDealershipManager.Core.DTOs
 {
     public class VendaDTO
     {
@@ -12,6 +14,7 @@
         public string ClienteNome { get; set; }
         public string CPFCliente { get; set; }
         public string ClienteTelefone { get; set; }
+        [ValidateDate(ErrorMessage = "A data da venda não pode ser futura.")]
         public DateTime DataVenda { get; set; }
         public decimal PrecoVenda { get; set; }
         public string ProtocoloVenda { get; set; }
@@ -25,6 +28,7 @@
         public string ClienteNome { get; set; }
         public string ClienteCPF { get; set; }
         public string ClienteTelefone { get; set; }
+        [ValidateDate(ErrorMessage = "A data da venda não pode ser futura.")]
         public DateTime DataVenda { get; set; }
         public decimal PrecoVenda { get; set; }
     }

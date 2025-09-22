@@ -1,0 +1,41 @@
+@model IEnumerable<CarDealershipManager.Core.DTOs.VendaDTO>
+
+@{
+    ViewData["Title"] = "Vendas";
+}
+
+<h1>Vendas</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Nova Venda</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.DataVenda)</th>
+            <th>@Html.DisplayNameFor(model => model.PrecoVenda)</th>
+            <th>@Html.DisplayNameFor(model => model.ProtocoloVenda)</th>
+            <th>Veículo</th>
+            <th>Concessionária</th>
+            <th>Cliente</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.DataVenda.ToString("dd/MM/yyyy")</td>
+                <td>@item.PrecoVenda.ToString("C")</td>
+                <td>@item.ProtocoloVenda</td>
+                <td>@item.VeiculoModelo</td>
+                <td>@item.ConcessionariaNome</td>
+                <td>@item.ClienteNome</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Detalhes</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

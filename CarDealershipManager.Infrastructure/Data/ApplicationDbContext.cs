@@ -27,7 +27,7 @@ namespace CarDealershipManager.Infrastructure.Data
             builder.Entity<Fabricante>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.HasIndex(e => e.Nome).IsUnique();
+                entity.HasIndex(e => e.Nome).IsUnique().HasFilter("[IsDeleted] = 0");
                 entity.Property(e => e.Nome).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.PaisOrigem).HasMaxLength(50);
                 entity.Property(e => e.Website).HasMaxLength(255);
@@ -57,7 +57,7 @@ namespace CarDealershipManager.Infrastructure.Data
             builder.Entity<Concessionaria>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.HasIndex(e => e.Nome).IsUnique();
+                entity.HasIndex(e => e.Nome).IsUnique().HasFilter("[IsDeleted] = 0");
                 entity.Property(e => e.Nome).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Endereco).IsRequired().HasMaxLength(255);
                 entity.Property(e => e.Cidade).HasMaxLength(50).IsRequired();
@@ -73,7 +73,7 @@ namespace CarDealershipManager.Infrastructure.Data
             builder.Entity<Cliente>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.HasIndex(e => e.CPF).IsUnique();
+                entity.HasIndex(e => e.CPF).IsUnique().HasFilter("[IsDeleted] = 0");
                 entity.Property(e => e.Nome).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.CPF).IsRequired().HasMaxLength(11);
                 entity.Property(e => e.Telefone).HasMaxLength(15);
@@ -131,10 +131,12 @@ namespace CarDealershipManager.Infrastructure.Data
                 if (entry.State == EntityState.Added)
                 {
                     entity.CreatedAt = DateTime.UtcNow;
+                    entity.UpdatedAt = DateTime.UtcNow;
                 }
 
                 else if (entry.State == EntityState.Modified)
                 {
+                    entry.Property(nameof(BaseModel.CreatedAt)).IsModified = false;
                     entity.UpdatedAt = DateTime.UtcNow;
                 }
             }
