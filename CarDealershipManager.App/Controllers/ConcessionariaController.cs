@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using CarDealershipManager.Core.Models;
 using CarDealershipManager.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CarDealershipManager.App.Controllers
 {
@@ -20,12 +21,14 @@ namespace CarDealershipManager.App.Controllers
         }
 
         // GET: Concessionaria
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             return View(await _context.Concessionarias.ToListAsync());
         }
 
         // GET: Concessionaria/Details/5
+        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -44,6 +47,7 @@ namespace CarDealershipManager.App.Controllers
         }
 
         // GET: Concessionaria/Create
+        [Authorize(Roles = "Administrador")]
         public IActionResult Create()
         {
             return View();
@@ -54,6 +58,7 @@ namespace CarDealershipManager.App.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Create([Bind("Nome,Endereco,Cidade,Estado,CEP,Telefone,Email,CapacidadeMaximaVeiculos,Id")] Concessionaria concessionaria)
         {
             if (ModelState.IsValid)
@@ -66,6 +71,7 @@ namespace CarDealershipManager.App.Controllers
         }
 
         // GET: Concessionaria/Edit/5
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -86,6 +92,7 @@ namespace CarDealershipManager.App.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Edit(int id, [Bind("Nome,Endereco,Cidade,Estado,CEP,Telefone,Email,CapacidadeMaximaVeiculos,Id")] Concessionaria concessionaria)
         {
             if (id != concessionaria.Id)
@@ -117,6 +124,7 @@ namespace CarDealershipManager.App.Controllers
         }
 
         // GET: Concessionaria/Delete/5
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -137,6 +145,7 @@ namespace CarDealershipManager.App.Controllers
         // POST: Concessionaria/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var concessionaria = await _context.Concessionarias.FindAsync(id);

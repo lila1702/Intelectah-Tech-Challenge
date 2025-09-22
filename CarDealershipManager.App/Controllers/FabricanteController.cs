@@ -1,5 +1,6 @@
 using CarDealershipManager.Core.Models;
 using CarDealershipManager.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,12 +15,14 @@ namespace CarDealershipManager.App.Controllers
             _context = context;
         }
 
+        [Authorize]
         // GET: Fabricante
         public async Task<IActionResult> Index()
         {
             return View(await _context.Fabricantes.ToListAsync());
         }
 
+        [Authorize]
         // GET: Fabricante/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -39,6 +42,7 @@ namespace CarDealershipManager.App.Controllers
         }
 
         // GET: Fabricante/Create
+        [Authorize(Roles = "Administrador")]
         public IActionResult Create()
         {
             return View();
@@ -49,6 +53,7 @@ namespace CarDealershipManager.App.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Create([Bind("Nome,PaisOrigem,AnoFundacao,Website")] Fabricante fabricante)
         {
             if (_context.Fabricantes.Any(f => f.Nome == fabricante.Nome && !f.IsDeleted))
@@ -67,6 +72,7 @@ namespace CarDealershipManager.App.Controllers
         }
 
         // GET: Fabricante/Edit/5
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -87,6 +93,7 @@ namespace CarDealershipManager.App.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Edit(int id, [Bind("Nome,PaisOrigem,AnoFundacao,Website,Id")] Fabricante fabricante)
         {
             if (id != fabricante.Id)
@@ -124,6 +131,7 @@ namespace CarDealershipManager.App.Controllers
         }
 
         // GET: Fabricante/Delete/5
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -144,6 +152,7 @@ namespace CarDealershipManager.App.Controllers
         // POST: Fabricante/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var fabricante = await _context.Fabricantes.FindAsync(id);

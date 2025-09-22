@@ -1,4 +1,4 @@
-using CarDealershipManager.Infrastructure;
+﻿using CarDealershipManager.Infrastructure;
 using CarDealershipManager.Infrastructure.Data;
 using CarDealershipManager.Infrastructure.Identity;
 using CarDealershipManager.Infrastructure.Mapping;
@@ -26,6 +26,13 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     options.User.RequireUniqueEmail = true;
 }).AddRoles<IdentityRole>()
   .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Configuração de caminhos padrão de autenticação/autorização
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
 
 // Redis
 builder.Services.AddStackExchangeRedisCache(options =>
@@ -155,7 +162,7 @@ static async Task SeedDatabase(ApplicationDbContext context, UserManager<Applica
         {
             UserName = gerenteEmail,
             Email = gerenteEmail,
-            NomeCompleto = "Gerente da Concession�ria",
+            NomeCompleto = "Gerente da Concessionária",
             NivelAcesso = CarDealershipManager.Core.Enums.NivelAcesso.Gerente,
             EmailConfirmed = true,
             DataCriacao = DateTime.UtcNow,
@@ -179,7 +186,7 @@ static async Task SeedDatabase(ApplicationDbContext context, UserManager<Applica
         {
             UserName = vendedorEmail,
             Email = vendedorEmail,
-            NomeCompleto = "Vendedor da Concession�ria",
+            NomeCompleto = "Vendedor da Concessionária",
             NivelAcesso = CarDealershipManager.Core.Enums.NivelAcesso.Vendedor,
             EmailConfirmed = true,
             DataCriacao = DateTime.UtcNow,

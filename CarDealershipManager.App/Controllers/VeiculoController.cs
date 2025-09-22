@@ -1,12 +1,13 @@
+using CarDealershipManager.Core.Models;
+using CarDealershipManager.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using CarDealershipManager.Core.Models;
-using CarDealershipManager.Infrastructure.Data;
 
 namespace CarDealershipManager.App.Controllers
 {
@@ -20,6 +21,7 @@ namespace CarDealershipManager.App.Controllers
         }
 
         // GET: Veiculo
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             var applicationDbContext = _context.Veiculos.Include(v => v.Fabricante);
@@ -27,6 +29,7 @@ namespace CarDealershipManager.App.Controllers
         }
 
         // GET: Veiculo/Details/5
+        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -46,6 +49,7 @@ namespace CarDealershipManager.App.Controllers
         }
 
         // GET: Veiculo/Create
+        [Authorize(Roles = "Gerente")]
         public IActionResult Create()
         {
             ViewData["FabricanteId"] = new SelectList(_context.Fabricantes, "Id", "Nome");
@@ -57,6 +61,7 @@ namespace CarDealershipManager.App.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Gerente")]
         public async Task<IActionResult> Create([Bind("Modelo,AnoFabricacao,Preco,FabricanteId,TipoVeiculo,Descricao,Id")] Veiculo veiculo)
         {
             if (!_context.Fabricantes.Any(f => f.Id == veiculo.FabricanteId && !f.IsDeleted))
@@ -75,6 +80,7 @@ namespace CarDealershipManager.App.Controllers
         }
 
         // GET: Veiculo/Edit/5
+        [Authorize(Roles = "Gerente")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -96,6 +102,7 @@ namespace CarDealershipManager.App.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Gerente")]
         public async Task<IActionResult> Edit(int id, [Bind("Modelo,AnoFabricacao,Preco,FabricanteId,TipoVeiculo,Descricao,Id")] Veiculo veiculo)
         {
             if (id != veiculo.Id)
@@ -128,6 +135,7 @@ namespace CarDealershipManager.App.Controllers
         }
 
         // GET: Veiculo/Delete/5
+        [Authorize(Roles = "Gerente")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -149,6 +157,7 @@ namespace CarDealershipManager.App.Controllers
         // POST: Veiculo/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Gerente")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var veiculo = await _context.Veiculos.FindAsync(id);
@@ -167,6 +176,7 @@ namespace CarDealershipManager.App.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public JsonResult SearchFabricante(string term)
         {
             var fabricantes = _context.Fabricantes

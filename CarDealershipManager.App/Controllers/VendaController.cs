@@ -1,5 +1,6 @@
 ﻿using CarDealershipManager.Core.DTOs;
 using CarDealershipManager.Core.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -23,6 +24,7 @@ public class VendaController : Controller
     }
 
     // GET: Venda
+    [Authorize]
     public async Task<IActionResult> Index()
     {
         try
@@ -39,6 +41,7 @@ public class VendaController : Controller
     }
 
     // GET: Venda/Details/5
+    [Authorize]
     public async Task<IActionResult> Details(int id)
     {
         try
@@ -59,6 +62,7 @@ public class VendaController : Controller
     }
 
     // GET: Venda/Create
+    [Authorize(Roles = "Vendedor")]
     public async Task<IActionResult> Create()
     {
         try
@@ -77,6 +81,7 @@ public class VendaController : Controller
     // POST: Venda/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Vendedor")]
     public async Task<IActionResult> Create(VendaCreateDTO vendaDTO)
     {
         try
@@ -119,6 +124,7 @@ public class VendaController : Controller
 
     // GET: /Venda/GetPrecoVeiculo?id=1
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetPrecoVeiculo(int id)
     {
         try
