@@ -1,4 +1,4 @@
-using CarDealershipManager.Infrastructure;
+﻿using CarDealershipManager.Infrastructure;
 using CarDealershipManager.Infrastructure.Data;
 using CarDealershipManager.Infrastructure.Identity;
 using CarDealershipManager.Infrastructure.Mapping;
@@ -27,6 +27,13 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 }).AddRoles<IdentityRole>()
   .AddEntityFrameworkStores<ApplicationDbContext>();
 
+// Configuração de caminhos padrão de autenticação/autorização
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
+
 // Redis
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -34,11 +41,12 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.ConfigurationOptions = new ConfigurationOptions
     {
         EndPoints = { "localhost:6379" },
-        ConnectTimeout = 5000,
-        SyncTimeout = 5000,
-        ConnectRetry = 3,
+        ConnectTimeout = 1000,
+        SyncTimeout = 1000,
+        AsyncTimeout = 1000,
+        ConnectRetry = 2,
         ReconnectRetryPolicy = new ExponentialRetry(1000),
-        AbortOnConnectFail = false
+        AbortOnConnectFail = true
     };
 });
 
@@ -155,7 +163,7 @@ static async Task SeedDatabase(ApplicationDbContext context, UserManager<Applica
         {
             UserName = gerenteEmail,
             Email = gerenteEmail,
-            NomeCompleto = "Gerente da Concession�ria",
+            NomeCompleto = "Gerente da Concessionária",
             NivelAcesso = CarDealershipManager.Core.Enums.NivelAcesso.Gerente,
             EmailConfirmed = true,
             DataCriacao = DateTime.UtcNow,
@@ -179,7 +187,7 @@ static async Task SeedDatabase(ApplicationDbContext context, UserManager<Applica
         {
             UserName = vendedorEmail,
             Email = vendedorEmail,
-            NomeCompleto = "Vendedor da Concession�ria",
+            NomeCompleto = "Vendedor da Concessionária",
             NivelAcesso = CarDealershipManager.Core.Enums.NivelAcesso.Vendedor,
             EmailConfirmed = true,
             DataCriacao = DateTime.UtcNow,

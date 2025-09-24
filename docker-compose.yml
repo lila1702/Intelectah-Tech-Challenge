@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -26,6 +24,8 @@ services:
       - sqlserver
       - redis
     ports:
-      - "5000:80"
+      - "5206:80"
     environment:
       ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=CarDealershipDB;User Id=sa;Password=Senh4Dever4sEfic4z!;TrustServerCertificate=True;"
+      ConnectionStrings__Redis: "redis:6379"
+      ASPNETCORE_URLS: "http://+:80"

@@ -10,6 +10,7 @@ namespace CarDealershipManager.Core.Interfaces
     public interface IFabricanteRepository : IBaseRepository<Fabricante>
     {
         Task<bool> IsNomeUniqueAsync(string nome, int? id = null);
+        Task<List<Fabricante>> SearchFabricanteByNameAsync(string nome);
         Task<IEnumerable<Fabricante>> GetWithVeiculosAsync();
     }
 }

@@ -16,6 +16,15 @@ namespace CarDealershipManager.Infrastructure.Repositories
             return await _dbSet.Include(f => f.Veiculos).ToListAsync();
         }
 
+        public async Task<List<Fabricante>> SearchFabricanteByNameAsync(string nome)
+        {
+            return await _dbSet
+                .Where(f => f.Nome.ToLower().Contains(nome.ToLower()) && !f.IsDeleted)
+                .OrderBy(f => f.Nome)
+                .Take(10)
+                .ToListAsync();
+        }
+
         public async Task<bool> IsNomeUniqueAsync(string nome, int? id = null)
         {
             var query = _dbSet.Where(f => f.Nome.ToLower() == nome.ToLower());

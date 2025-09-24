@@ -1,25 +1,39 @@
-using CarDealershipManager.Core.Models;
-using CarDealershipManager.Infrastructure.Data;
+using CarDealershipManager.Core.DTOs;
+using CarDealershipManager.Core.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CarDealershipManager.App.Controllers
 {
     public class FabricanteController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IFabricanteService _fabricanteService;
+        private readonly ILogger<FabricanteController> _logger;
 
-        public FabricanteController(ApplicationDbContext context)
+        public FabricanteController(IFabricanteService fabricanteService, ILogger<FabricanteController> logger)
         {
-            _context = context;
+            _fabricanteService = fabricanteService;
+            _logger = logger;
         }
 
+        [Authorize]
         // GET: Fabricante
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Fabricantes.ToListAsync());
+            try
+            {
+                var fabricantes = await _fabricanteService.GetAllAsync();
+                return View(fabricantes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao carregar lista de fabricantes");
+                TempData["Error"] = "Erro ao carregar fabricantes. Tente novamente.";
+                return View(new List<FabricanteDTO>());
+            }
         }
 
+        [Authorize]
         // GET: Fabricante/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -28,45 +42,60 @@ namespace CarDealershipManager.App.Controllers
                 return NotFound();
             }
 
-            var fabricante = await _context.Fabricantes
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (fabricante == null)
+            try
+            {
+                var fabricante = await _fabricanteService.GetByIdAsync(id.Value);
+                return View(fabricante);
+            }
+            catch (ArgumentException)
             {
                 return NotFound();
             }
-
-            return View(fabricante);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao carregar detalhes do fabricante ID: {Id}", id);
+                TempData["Error"] = "Erro ao carregar detalhes do fabricante.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         // GET: Fabricante/Create
+        [Authorize(Roles = "Administrador")]
         public IActionResult Create()
         {
             return View();
         }
 
         // POST: Fabricante/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Nome,PaisOrigem,AnoFundacao,Website")] Fabricante fabricante)
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Create(FabricanteCreateDTO fabricante)
         {
-            if (_context.Fabricantes.Any(f => f.Nome == fabricante.Nome && !f.IsDeleted))
-            {
-                ModelState.AddModelError("Nome", "Já existe um fabricante ativo com este nome.");
-                return View(fabricante);
-            }
-
             if (ModelState.IsValid)
             {
-                _context.Add(fabricante);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    await _fabricanteService.CreateAsync(fabricante);
+                    TempData["Success"] = "Fabricante criado com sucesso!";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (ArgumentException ex)
+                {
+                    ModelState.AddModelError("Nome", ex.Message);
+                    _logger.LogWarning("Tentativa de criar fabricante com nome duplicado: {Nome}", fabricante.Nome);
+                }
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "Erro ao criar fabricante. Tente novamente.";
+                    _logger.LogError(ex, "Erro ao criar fabricante: {Nome}", fabricante.Nome);
+                }
             }
             return View(fabricante);
         }
 
         // GET: Fabricante/Edit/5
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -74,56 +103,70 @@ namespace CarDealershipManager.App.Controllers
                 return NotFound();
             }
 
-            var fabricante = await _context.Fabricantes.FindAsync(id);
-            if (fabricante == null)
+            try
+            {
+                var fabricante = await _fabricanteService.GetByIdAsync(id.Value);
+
+                // Converter FabricanteDTO para FabricanteUpdateDTO
+                var fabricanteUpdateDTO = new FabricanteUpdateDTO
+                {
+                    Nome = fabricante.Nome,
+                    PaisOrigem = fabricante.PaisOrigem,
+                    AnoFundacao = fabricante.AnoFundacao,
+                    Website = fabricante.Website
+                };
+
+                return View(fabricanteUpdateDTO);
+            }
+            catch (ArgumentException)
             {
                 return NotFound();
             }
-            return View(fabricante);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao carregar fabricante para edição ID: {Id}", id);
+                TempData["Error"] = "Erro ao carregar fabricante para edição.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         // POST: Fabricante/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Nome,PaisOrigem,AnoFundacao,Website,Id")] Fabricante fabricante)
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Edit(int id, FabricanteUpdateDTO fabricante)
         {
-            if (id != fabricante.Id)
-            {
-                return NotFound();
-            }
-
-            if (_context.Fabricantes.Any(f => f.Nome == fabricante.Nome && !f.IsDeleted && f.Id != fabricante.Id))
-            {
-                ModelState.AddModelError("Nome", "Já existe um fabricante ativo com este nome.");
-                return View(fabricante);
-            }
-
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(fabricante);
-                    await _context.SaveChangesAsync();
+                    await _fabricanteService.UpdateAsync(id, fabricante);
+                    TempData["Success"] = "Fabricante atualizado com sucesso!";
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (ArgumentException ex)
                 {
-                    if (!FabricanteExists(fabricante.Id))
+                    if (ex.Message.Contains("não encontrado"))
                     {
                         return NotFound();
                     }
                     else
                     {
-                        throw;
+                        ModelState.AddModelError("Nome", ex.Message);
+                        _logger.LogWarning("Tentativa de atualizar fabricante com nome duplicado: {Nome}", fabricante.Nome);
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "Erro ao atualizar fabricante. Tente novamente.";
+                    _logger.LogError(ex, "Erro ao atualizar fabricante ID: {Id}", id);
+                }
             }
             return View(fabricante);
         }
 
         // GET: Fabricante/Delete/5
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -131,35 +174,64 @@ namespace CarDealershipManager.App.Controllers
                 return NotFound();
             }
 
-            var fabricante = await _context.Fabricantes
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (fabricante == null)
+            try
+            {
+                var fabricante = await _fabricanteService.GetByIdAsync(id.Value);
+                return View(fabricante);
+            }
+            catch (ArgumentException)
             {
                 return NotFound();
             }
-
-            return View(fabricante);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao carregar fabricante para exclusão ID: {Id}", id);
+                TempData["Error"] = "Erro ao carregar fabricante para exclusão.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         // POST: Fabricante/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var fabricante = await _context.Fabricantes.FindAsync(id);
-            if (fabricante != null)
+            try
             {
-                fabricante.IsDeleted = true;
-                _context.Update(fabricante);
-                await _context.SaveChangesAsync();
+                await _fabricanteService.DeleteAsync(id);
+                TempData["Success"] = "Fabricante deletado com sucesso!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (ArgumentException ex)
+            {
+                TempData["Error"] = "Fabricante não encontrado.";
+                _logger.LogWarning("Tentativa de deletar fabricante inexistente ID: {Id}", id);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Erro ao deletar fabricante. Verifique se não há veículos cadastrados para este fabricante.";
+                _logger.LogError(ex, "Erro ao deletar fabricante ID: {Id}", id);
             }
 
             return RedirectToAction(nameof(Index));
         }
 
-        private bool FabricanteExists(int id)
+        // Método auxiliar para buscar fabricantes com veículos (se necessário)
+        [Authorize]
+        public async Task<IActionResult> WithVeiculos()
         {
-            return _context.Fabricantes.Any(e => e.Id == id);
+            try
+            {
+                var fabricantes = await _fabricanteService.GetWithVeiculosAsync();
+                return View("Index", fabricantes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao carregar fabricantes com veículos");
+                TempData["Error"] = "Erro ao carregar fabricantes com veículos.";
+                return RedirectToAction(nameof(Index));
+            }
         }
     }
 }

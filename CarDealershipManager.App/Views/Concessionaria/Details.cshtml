@@ -1,66 +1,90 @@
-@model CarDealershipManager.Core.Models.Concessionaria
+@model CarDealershipManager.Core.DTOs.ConcessionariaDTO
 
 @{
-    ViewData["Title"] = "Detalhes Concessionária";
+    ViewData["Title"] = "Detalhes da Concessionária";
 }
 
-<h1>Detalhes</h1>
+<h1><i class="fas fa-building"></i> Detalhes da Concessionária</h1>
 
-<div>
-    <h4>Concessionaria</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Nome)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Nome)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Endereco)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Endereco)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Cidade)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Cidade)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Estado)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Estado)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CEP)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CEP)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Telefone)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Telefone)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Email)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Email)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CapacidadeMaximaVeiculos)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CapacidadeMaximaVeiculos)
-        </dd>
-    </dl>
+<!-- Mensagens de Erro -->
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informações da Concessionária</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4"><i class="fas fa-tag text-primary"></i> Nome</dt>
+                    <dd class="col-sm-8"><strong>@Model.Nome</strong></dd>
+
+                    <dt class="col-sm-4"><i class="fas fa-map-marker-alt text-danger"></i> Endereço</dt>
+                    <dd class="col-sm-8">@Model.Endereco</dd>
+
+                    <dt class="col-sm-4"><i class="fas fa-city text-secondary"></i> Cidade</dt>
+                    <dd class="col-sm-8">@Model.Cidade</dd>
+
+                    <dt class="col-sm-4"><i class="fas fa-flag text-info"></i> Estado</dt>
+                    <dd class="col-sm-8">@Model.Estado</dd>
+
+                    <dt class="col-sm-4"><i class="fas fa-mail-bulk text-warning"></i> CEP</dt>
+                    <dd class="col-sm-8">@Model.CEP</dd>
+
+                    <dt class="col-sm-4"><i class="fas fa-phone text-success"></i> Telefone</dt>
+                    <dd class="col-sm-8">@Model.Telefone</dd>
+
+                    <dt class="col-sm-4"><i class="fas fa-envelope text-primary"></i> E-mail</dt>
+                    <dd class="col-sm-8">@Model.Email</dd>
+
+                    <dt class="col-sm-4"><i class="fas fa-warehouse text-dark"></i> Capacidade Máx.</dt>
+                    <dd class="col-sm-8">@Model.CapacidadeMaximaVeiculos</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel de Ações -->
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-cogs"></i> Ações Disponíveis</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i> Editar Concessionária
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                        <i class="fas fa-trash"></i> Deletar Concessionária
+                    </a>
+                </div>
+                <hr class="my-3">
+                <div class="d-grid">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-list"></i> Voltar para Lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Salvar Alterações</a> |
-    <a asp-action="Index">Voltar</a>
-</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            setTimeout(function () {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+        });
+    </script>
+}

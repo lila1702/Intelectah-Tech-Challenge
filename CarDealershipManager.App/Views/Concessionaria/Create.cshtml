@@ -1,68 +1,188 @@
-@model CarDealershipManager.Core.Models.Concessionaria
+@model CarDealershipManager.Core.DTOs.ConcessionariaCreateDTO
 
 @{
     ViewData["Title"] = "Criar Concessionária";
 }
 
-<h1>Criar</h1>
+<h1><i class="fas fa-building"></i> Criar Concessionária</h1>
 
-<h4>Concessionaria</h4>
+<!-- Mensagens de Sucesso -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Mensagens de Erro -->
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Nome" class="control-label"></label>
-                <input asp-for="Nome" class="form-control" />
-                <span asp-validation-for="Nome" class="text-danger"></span>
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Nova Concessionária</h5>
             </div>
-            <div class="form-group">
-                <label asp-for="Endereco" class="control-label"></label>
-                <input asp-for="Endereco" class="form-control" />
-                <span asp-validation-for="Endereco" class="text-danger"></span>
+            <div class="card-body">
+                <form asp-action="Create" id="concessionariaForm">
+                    <!-- Erros de Validação -->
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert" style="display:none;"></div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Nome" class="form-label">Nome *</label>
+                        <input asp-for="Nome" class="form-control" placeholder="Digite o nome da concessionária..." />
+                        <span asp-validation-for="Nome" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="CEP" class="form-label">CEP *</label>
+                        <input asp-for="CEP" class="form-control" id="cep" placeholder="Digite o CEP..." />
+                        <span asp-validation-for="CEP" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Endereco" class="form-label">Endereço</label>
+                        <input asp-for="Endereco" class="form-control" id="endereco" placeholder="Rua, avenida..." />
+                        <span asp-validation-for="Endereco" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Cidade" class="form-label">Cidade</label>
+                        <input asp-for="Cidade" class="form-control" id="cidade" />
+                        <span asp-validation-for="Cidade" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Estado" class="form-label">Estado</label>
+                        <input asp-for="Estado" class="form-control" id="estado" />
+                        <span asp-validation-for="Estado" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Telefone" class="form-label">Telefone</label>
+                        <input asp-for="Telefone" id="telefone" class="form-control" placeholder="(99) 99999-9999" />
+                        <span asp-validation-for="Telefone" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Email" class="form-label">E-mail</label>
+                        <input asp-for="Email" class="form-control" type="email" placeholder="exemplo@email.com" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="CapacidadeMaximaVeiculos" class="form-label">Capacidade Máxima de Veículos</label>
+                        <input asp-for="CapacidadeMaximaVeiculos" class="form-control" type="number" />
+                        <span asp-validation-for="CapacidadeMaximaVeiculos" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mt-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" id="btnSubmit">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
             </div>
-            <div class="form-group">
-                <label asp-for="Cidade" class="control-label"></label>
-                <input asp-for="Cidade" class="form-control" />
-                <span asp-validation-for="Cidade" class="text-danger"></span>
+        </div>
+    </div>
+
+    <!-- Painel de Ajuda -->
+    <div class="col-md-6">
+        <div class="card border-info">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Dicas de Preenchimento</h6>
             </div>
-            <div class="form-group">
-                <label asp-for="Estado" class="control-label"></label>
-                <input asp-for="Estado" class="form-control" />
-                <span asp-validation-for="Estado" class="text-danger"></span>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><strong>Nome:</strong> Deve ser único</li>
+                    <li><strong>CEP:</strong> O endereço será preenchido automaticamente</li>
+                    <li><strong>Telefone:</strong> Inclua DDD no início</li>
+                    <li><strong>E-mail:</strong> Deve ser válido</li>
+                </ul>
+                <small class="text-muted">
+                    <i class="fas fa-lightbulb"></i>
+                    <strong>Dica:</strong> Informações corretas facilitam relatórios e buscas.
+                </small>
             </div>
-            <div class="form-group">
-                <label asp-for="CEP" class="control-label"></label>
-                <input asp-for="CEP" class="form-control" />
-                <span asp-validation-for="CEP" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Telefone" class="control-label"></label>
-                <input asp-for="Telefone" class="form-control" />
-                <span asp-validation-for="Telefone" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CapacidadeMaximaVeiculos" class="control-label"></label>
-                <input asp-for="CapacidadeMaximaVeiculos" class="form-control" />
-                <span asp-validation-for="CapacidadeMaximaVeiculos" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Salvar" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Voltar</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            // // Máscara para telefone (formato: (99) 99999-9999)
+            $("#telefone").mask("(00) 00000-0000");
+
+            // Máscara para CEP (formato: 00000-000)
+            $("#cep").mask("00000-000");
+
+            // Auto-dismiss alerts
+            setTimeout(function () {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+
+            // Validação resumo toggle
+            function toggleValidationSummary() {
+                const validationSummary = $('[data-valmsg-summary="true"]');
+                const hasErrors = validationSummary.find('li').length > 0;
+                if (hasErrors) validationSummary.show();
+                else validationSummary.hide();
+            }
+
+            // Buscar endereço por CEP
+            $("#cep").blur(function () {
+                var cep = $(this).val().replace(/\D/g, '');
+                if (cep.length === 8) {
+                    $.ajax({
+                        url: '/Concessionaria/BuscarEnderecoPorCEP',
+                        type: 'GET',
+                        data: { cep: cep },
+                        success: function (data) {
+                            $("#endereco").val(data.logradouro);
+                            $("#cidade").val(data.localidade);
+                            $("#estado").val(data.uf);
+                        },
+                        error: function () {
+                            alert("CEP não encontrado ou inválido!");
+                            $("#endereco, #cidade, #estado").val("");
+                        }
+                    });
+                }
+            });
+
+            // Loading no botão de salvar
+            $("#concessionariaForm").submit(function () {
+                const submitBtn = $("#btnSubmit");
+                submitBtn.prop("disabled", true)
+                         .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvando...');
+                setTimeout(function () {
+                    if (!$("#concessionariaForm").valid()) {
+                        submitBtn.prop("disabled", false)
+                                 .html('<i class="fas fa-save"></i> Salvar');
+                        toggleValidationSummary();
+                    }
+                }, 100);
+            });
+
+            toggleValidationSummary();
+        });
+    </script>
+
+
 }

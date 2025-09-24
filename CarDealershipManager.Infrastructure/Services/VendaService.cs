@@ -85,7 +85,7 @@ namespace CarDealershipManager.Infrastructure.Services
 
         public async Task<IEnumerable<VendaDTO>> GetAllAsync()
         {
-            var vendas = await _vendaRepository.GetAllAsync();
+            var vendas = await _vendaRepository.GetAllActiveAsync();
             return _mapper.Map<IEnumerable<VendaDTO>>(vendas);
         }
 

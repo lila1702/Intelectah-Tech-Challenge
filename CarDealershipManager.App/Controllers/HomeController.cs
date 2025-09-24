@@ -24,6 +24,7 @@ public class HomeController : Controller
         _concessionariaService = concessionariaService;
     }
 
+    [Authorize]
     public async Task<IActionResult> Index()
     {
         var inicioMes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);

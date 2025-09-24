@@ -14,12 +14,14 @@ namespace CarDealershipManager.App.Controllers
             _vendaService = vendaService;
         }
 
+        [Authorize(Roles = "Gerente")]
         public IActionResult Index()
         {
             return View();
         }
 
         [HttpGet]
+        [Authorize(Roles = "Gerente")]
         public async Task<IActionResult> VendasPorPeriodo(int mes, int ano)
         {
             var inicio = new DateTime(ano, mes, 1);

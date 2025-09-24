@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using CarDealershipManager.Core.DTOs;
 using CarDealershipManager.Core.Models;
-using CarDealershipManager.Core.Enums;
 
 namespace CarDealershipManager.Infrastructure.Mapping
 {
@@ -12,25 +11,28 @@ namespace CarDealershipManager.Infrastructure.Mapping
             // Fabricante
             CreateMap<Fabricante, FabricanteDTO>()
                 .ForMember(dest => dest.TotalVeiculos, opt => opt.MapFrom(src => src.Veiculos.Count));
-            CreateMap<Fabricante, FabricanteCreateDTO>();
-            CreateMap<Fabricante, FabricanteUpdateDTO>();
 
-            // Veiculos
+            CreateMap<FabricanteCreateDTO, Fabricante>();
+            CreateMap<FabricanteUpdateDTO, Fabricante>();
+
+            // Veículo
             CreateMap<Veiculo, VeiculoDTO>()
                 .ForMember(dest => dest.FabricanteNome, opt => opt.MapFrom(src => src.Fabricante.Nome))
                 .ForMember(dest => dest.TipoVeiculoDescricao, opt => opt.MapFrom(src => src.TipoVeiculo.ToString()));
-            CreateMap<Veiculo, VeiculoCreateDTO>();
-            CreateMap<Veiculo, VeiculoUpdateDTO>();
 
-            // Concessionaria
+            CreateMap<VeiculoCreateDTO, Veiculo>();
+            CreateMap<VeiculoUpdateDTO, Veiculo>();
+
+            // Concessionária
             CreateMap<Concessionaria, ConcessionariaDTO>()
                 .ForMember(dest => dest.TotalVendas, opt => opt.MapFrom(src => src.Vendas.Count));
-            CreateMap<Concessionaria, ConcessionariaCreateDTO>();
-            CreateMap<Concessionaria, ConcessionariaUpdateDTO>();
+
+            CreateMap<ConcessionariaCreateDTO, Concessionaria>();
+            CreateMap<ConcessionariaUpdateDTO, Concessionaria>();
 
             // Cliente
             CreateMap<Cliente, ClienteDTO>();
-            CreateMap<Cliente, ClienteCreateDTO>();
+            CreateMap<ClienteCreateDTO, Cliente>();
 
             // Venda
             CreateMap<Venda, VendaDTO>()
@@ -39,6 +41,10 @@ namespace CarDealershipManager.Infrastructure.Mapping
                 .ForMember(dest => dest.ConcessionariaNome, opt => opt.MapFrom(src => src.Concessionaria.Nome))
                 .ForMember(dest => dest.ClienteNome, opt => opt.MapFrom(src => src.Cliente.Nome))
                 .ForMember(dest => dest.CPFCliente, opt => opt.MapFrom(src => src.Cliente.CPF));
+
+            CreateMap<VendaCreateDTO, Venda>()
+                .ForMember(dest => dest.Cliente, opt => opt.Ignore()) // Cliente é tratado no serviço
+                .ForMember(dest => dest.ProtocoloVenda, opt => opt.Ignore()); // Gerado no serviço
         }
     }
 }

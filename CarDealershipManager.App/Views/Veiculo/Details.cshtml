@@ -1,54 +1,133 @@
-@model CarDealershipManager.Core.Models.Veiculo
+@model CarDealershipManager.Core.DTOs.VeiculoDTO
 
 @{
-    ViewData["Title"] = "Detalhes Veículo";
+    ViewData["Title"] = "Detalhes do Veículo";
 }
 
-<h1>Detalhes</h1>
+<h1><i class="fas fa-car"></i> Detalhes do Veículo</h1>
 
-<div>
-    <h4>Veiculo</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Modelo)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Modelo)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.AnoFabricacao)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.AnoFabricacao)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Preco)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Preco)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TipoVeiculo)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TipoVeiculo)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Descricao)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Descricao)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Fabricante)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Fabricante.Nome)
-        </dd>
-    </dl>
+<!-- Mensagens de Sucesso -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Mensagens de Erro -->
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<hr />
+
+<div class="row">
+    <!-- Card de Informações -->
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informações do Veículo</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4"><i class="fas fa-tag text-primary"></i> Modelo</dt>
+                    <dd class="col-sm-8"><strong>@Html.DisplayFor(m => m.Modelo)</strong></dd>
+
+                    <dt class="col-sm-4"><i class="fas fa-calendar-alt text-info"></i> Ano</dt>
+                    <dd class="col-sm-8">@Html.DisplayFor(m => m.AnoFabricacao)</dd>
+
+                    <dt class="col-sm-4"><i class="fas fa-dollar-sign text-success"></i> Preço</dt>
+                    <dd class="col-sm-8">
+                        @if (Model?.Preco != null)
+                        {
+                            @Model.Preco.ToString("C")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Não informado</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4"><i class="fas fa-tags text-warning"></i> Tipo</dt>
+                    <dd class="col-sm-8">
+                        @(string.IsNullOrEmpty(Model?.TipoVeiculoDescricao)
+                                                ? Model?.TipoVeiculo.ToString()
+                                                : Model?.TipoVeiculoDescricao)
+                    </dd>
+
+                    <dt class="col-sm-4"><i class="fas fa-align-left text-secondary"></i> Descrição</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrWhiteSpace(Model?.Descricao))
+                        {
+                            @Model.Descricao
+                        }
+                        else
+                        {
+                            <span class="text-muted">Não informado</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4"><i class="fas fa-industry text-dark"></i> Fabricante</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrWhiteSpace(Model?.FabricanteNome))
+                        {
+                            @Model.FabricanteNome
+                        }
+                        else
+                        {
+                            <span class="text-muted">Não informado</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card de Ações -->
+    <div class="col-md-6">
+        <div class="card border-info shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-cogs"></i> Ações Disponíveis</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i> Editar Veículo
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model?.Id" class="btn btn-outline-danger">
+                        <i class="fas fa-trash"></i> Deletar Veículo
+                    </a>
+                </div>
+                <hr class="my-3" />
+                <div class="d-grid">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar para Lista
+                    </a>
+                </div>
+
+                <div class="alert alert-light mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Dica:</strong> Use as ações acima para gerenciar este veículo.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Editar</a> |
-    <a asp-action="Index">Voltar</a>
-</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Auto-dismiss alerts
+            setTimeout(function () {
+                $('.alert').not('.alert-light').fadeOut('slow');
+            }, 5000);
+        });
+    </script>
+}

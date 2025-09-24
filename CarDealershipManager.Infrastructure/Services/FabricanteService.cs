@@ -55,7 +55,7 @@ namespace CarDealershipManager.Infrastructure.Services
                 return cached;
             }
 
-            var fabricantes = await _fabricanteRepository.GetAllAsync();
+            var fabricantes = await _fabricanteRepository.GetAllActiveAsync();
             var fabricantesDTO = _mapper.Map<IEnumerable<FabricanteDTO>>(fabricantes);
 
             await _cacheService.SetAsync(cacheKey, fabricantesDTO, TimeSpan.FromMinutes(15));
@@ -111,6 +111,12 @@ namespace CarDealershipManager.Infrastructure.Services
             await _cacheService.RemoveAsync("fabricantes_all");
 
             return _mapper.Map<FabricanteDTO>(fabricante);
+        }
+
+        public async Task<List<FabricanteDTO>> SearchFabricanteByNameAsync(string term)
+        {
+            var fabricantes = await _fabricanteRepository.SearchFabricanteByNameAsync(term);
+            return _mapper.Map<List<FabricanteDTO>>(fabricantes);
         }
     }
 }

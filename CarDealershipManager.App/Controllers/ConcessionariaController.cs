@@ -1,157 +1,231 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using CarDealershipManager.Core.DTOs;
+using CarDealershipManager.Core.Interfaces.External;
+using CarDealershipManager.Core.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using CarDealershipManager.Core.Models;
-using CarDealershipManager.Infrastructure.Data;
 
 namespace CarDealershipManager.App.Controllers
 {
     public class ConcessionariaController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IConcessionariaService _concessionariaService;
+        private readonly ILogger<ConcessionariaController> _logger;
 
-        public ConcessionariaController(ApplicationDbContext context)
+        public ConcessionariaController(IConcessionariaService concessionariaService, ILogger<ConcessionariaController> logger)
         {
-            _context = context;
+            _concessionariaService = concessionariaService;
+            _logger = logger;
         }
 
+        [Authorize]
         // GET: Concessionaria
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Concessionarias.ToListAsync());
+            try
+            {
+                var concessionarias = await _concessionariaService.GetAllAsync();
+                return View(concessionarias);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao carregar lista de concessionárias");
+                TempData["Error"] = "Erro ao carregar concessionárias. Tente novamente.";
+                return View(new List<ConcessionariaDTO>());
+            }
         }
 
+        [Authorize]
         // GET: Concessionaria/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
+                return NotFound();
+
+            try
+            {
+                var concessionaria = await _concessionariaService.GetByIdAsync(id.Value);
+                return View(concessionaria);
+            }
+            catch (ArgumentException)
             {
                 return NotFound();
             }
-
-            var concessionaria = await _context.Concessionarias
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (concessionaria == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(ex, "Erro ao carregar detalhes da concessionária ID: {Id}", id);
+                TempData["Error"] = "Erro ao carregar detalhes da concessionária.";
+                return RedirectToAction(nameof(Index));
             }
-
-            return View(concessionaria);
         }
 
         // GET: Concessionaria/Create
+        [Authorize(Roles = "Administrador")]
         public IActionResult Create()
         {
             return View();
         }
 
         // POST: Concessionaria/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Nome,Endereco,Cidade,Estado,CEP,Telefone,Email,CapacidadeMaximaVeiculos,Id")] Concessionaria concessionaria)
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Create(ConcessionariaCreateDTO concessionaria)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(concessionaria);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    await _concessionariaService.CreateAsync(concessionaria);
+                    TempData["Success"] = "Concessionária criada com sucesso!";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (ArgumentException ex)
+                {
+                    ModelState.AddModelError("Nome", ex.Message);
+                    _logger.LogWarning("Tentativa de criar concessionária com nome duplicado: {Nome}", concessionaria.Nome);
+                }
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "Erro ao criar concessionária. Tente novamente.";
+                    _logger.LogError(ex, "Erro ao criar concessionária: {Nome}", concessionaria.Nome);
+                }
             }
             return View(concessionaria);
         }
 
         // GET: Concessionaria/Edit/5
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
-            {
                 return NotFound();
-            }
 
-            var concessionaria = await _context.Concessionarias.FindAsync(id);
-            if (concessionaria == null)
+            try
+            {
+                var concessionaria = await _concessionariaService.GetByIdAsync(id.Value);
+
+                var concessionariaUpdateDTO = new ConcessionariaUpdateDTO
+                {
+                    Nome = concessionaria.Nome,
+                    Endereco = concessionaria.Endereco,
+                    Cidade = concessionaria.Cidade,
+                    Estado = concessionaria.Estado,
+                    CEP = concessionaria.CEP,
+                    Telefone = concessionaria.Telefone,
+                    Email = concessionaria.Email,
+                    CapacidadeMaximaVeiculos = concessionaria.CapacidadeMaximaVeiculos
+                };
+
+                return View(concessionariaUpdateDTO);
+            }
+            catch (ArgumentException)
             {
                 return NotFound();
             }
-            return View(concessionaria);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao carregar concessionária para edição ID: {Id}", id);
+                TempData["Error"] = "Erro ao carregar concessionária para edição.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         // POST: Concessionaria/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Nome,Endereco,Cidade,Estado,CEP,Telefone,Email,CapacidadeMaximaVeiculos,Id")] Concessionaria concessionaria)
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Edit(int id, ConcessionariaUpdateDTO concessionaria)
         {
-            if (id != concessionaria.Id)
-            {
-                return NotFound();
-            }
-
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(concessionaria);
-                    await _context.SaveChangesAsync();
+                    await _concessionariaService.UpdateAsync(id, concessionaria);
+                    TempData["Success"] = "Concessionária atualizada com sucesso!";
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (ArgumentException ex)
                 {
-                    if (!ConcessionariaExists(concessionaria.Id))
-                    {
+                    if (ex.Message.Contains("não encontrada"))
                         return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+
+                    ModelState.AddModelError("Nome", ex.Message);
+                    _logger.LogWarning("Tentativa de atualizar concessionária com nome duplicado: {Nome}", concessionaria.Nome);
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "Erro ao atualizar concessionária. Tente novamente.";
+                    _logger.LogError(ex, "Erro ao atualizar concessionária ID: {Id}", id);
+                }
             }
             return View(concessionaria);
         }
 
         // GET: Concessionaria/Delete/5
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
+                return NotFound();
+
+            try
+            {
+                var concessionaria = await _concessionariaService.GetByIdAsync(id.Value);
+                return View(concessionaria);
+            }
+            catch (ArgumentException)
             {
                 return NotFound();
             }
-
-            var concessionaria = await _context.Concessionarias
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (concessionaria == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(ex, "Erro ao carregar concessionária para exclusão ID: {Id}", id);
+                TempData["Error"] = "Erro ao carregar concessionária para exclusão.";
+                return RedirectToAction(nameof(Index));
             }
-
-            return View(concessionaria);
         }
 
         // POST: Concessionaria/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var concessionaria = await _context.Concessionarias.FindAsync(id);
-            if (concessionaria != null)
+            try
             {
-                _context.Concessionarias.Remove(concessionaria);
+                await _concessionariaService.DeleteAsync(id);
+                TempData["Success"] = "Concessionária deletada com sucesso!";
+            }
+            catch (ArgumentException)
+            {
+                TempData["Error"] = "Concessionária não encontrada.";
+                _logger.LogWarning("Tentativa de deletar concessionária inexistente ID: {Id}", id);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Erro ao deletar concessionária.";
+                _logger.LogError(ex, "Erro ao deletar concessionária ID: {Id}", id);
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ConcessionariaExists(int id)
+        [HttpGet]
+        public async Task<IActionResult> BuscarEnderecoPorCEP(string cep, [FromServices] ICEPService cepService)
         {
-            return _context.Concessionarias.Any(e => e.Id == id);
+            try
+            {
+                var endereco = await cepService.BuscarEnderecoPorCEPAsync(cep);
+                if (endereco == null)
+                    return NotFound(new { mensagem = "CEP não encontrado." });
+
+                return Ok(endereco);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao buscar endereço pelo CEP {Cep}", cep);
+                return StatusCode(500, new { mensagem = "Erro interno ao buscar CEP." });
+            }
         }
     }
 }

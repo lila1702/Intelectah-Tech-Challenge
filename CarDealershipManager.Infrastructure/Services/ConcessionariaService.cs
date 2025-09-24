@@ -3,7 +3,6 @@ using CarDealershipManager.Core.DTOs;
 using CarDealershipManager.Core.Interfaces;
 using CarDealershipManager.Core.Interfaces.Services;
 using CarDealershipManager.Core.Models;
-using CarDealershipManager.Infrastructure.Repositories;
 
 namespace CarDealershipManager.Infrastructure.Services
 {
@@ -56,7 +55,7 @@ namespace CarDealershipManager.Infrastructure.Services
                 return cached;
             }
 
-            var concessionarias = await _concessionariaRepository.GetAllAsync();
+            var concessionarias = await _concessionariaRepository.GetAllActiveAsync();
             var concessionariasDTO = _mapper.Map<IEnumerable<ConcessionariaDTO>>(concessionarias);
 
             await _cacheService.SetAsync(cacheKey, concessionariasDTO, TimeSpan.FromMinutes(15));
