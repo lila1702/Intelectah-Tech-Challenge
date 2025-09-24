@@ -1,47 +1,141 @@
-@model CarDealershipManager.Core.Models.Fabricante
+@model CarDealershipManager.Core.DTOs.FabricanteCreateDTO
 
 @{
     ViewData["Title"] = "Criar Fabricante";
 }
 
-<h1>Criar</h1>
+<h1>Criar Fabricante</h1>
 
-<h4>Fabricante</h4>
+<!-- Mensagens de Sucesso -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Mensagens de Erro -->
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 <hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Nome" class="control-label"></label>
-                <input asp-for="Nome" class="form-control" />
-                <span asp-validation-for="Nome" class="text-danger"></span>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus-circle"></i> Novo Fabricante
+                </h5>
             </div>
-            <div class="form-group">
-                <label asp-for="PaisOrigem" class="control-label"></label>
-                <input asp-for="PaisOrigem" class="form-control" />
-                <span asp-validation-for="PaisOrigem" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="AnoFundacao" class="control-label"></label>
-                <input asp-for="AnoFundacao" class="form-control" />
-                <span asp-validation-for="AnoFundacao" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Website" class="control-label"></label>
-                <input asp-for="Website" class="form-control" />
-                <span asp-validation-for="Website" class="text-danger"></span>
-            </div>
+            <div class="card-body">
+                <form asp-action="Create" id="fabricanteForm">
+                    <!-- Erros de Validação Gerais -->
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert" style="display: none;"></div>
 
-            <div class="form-group">
-                <input type="submit" value="Salvar" class="btn btn-primary" />
-                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+                    <div class="form-group mb-3">
+                        <label asp-for="Nome" class="form-label">Nome *</label>
+                        <input asp-for="Nome" class="form-control" placeholder="Digite o nome do fabricante" />
+                        <span asp-validation-for="Nome" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="PaisOrigem" class="form-label">País de Origem *</label>
+                        <input asp-for="PaisOrigem" class="form-control" placeholder="Digite o país de origem" />
+                        <span asp-validation-for="PaisOrigem" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="AnoFundacao" class="form-label">Ano de Fundação</label>
+                        <input asp-for="AnoFundacao" class="form-control" type="number" placeholder="Digite o ano de fundação..." />
+                        <span asp-validation-for="AnoFundacao" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Website" class="form-label">Website</label>
+                        <input asp-for="Website" class="form-control" type="url" placeholder="https://www.exemplo.com" />
+                        <span asp-validation-for="Website" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mt-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" id="btnSubmit">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
+    </div>
+
+    <!-- Painel de Ajuda -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle"></i> Dicas de Preenchimento
+                </h6>
+            </div>
+            <div class="card-body">
+                <h6><i class="fas fa-lightbulb"></i> Informações importantes:</h6>
+                <ul class="mb-0">
+                    <li><strong>Nome:</strong> Deve ser único no sistema</li>
+                    <li><strong>País:</strong> Use o nome completo do país</li>
+                    <li><strong>Ano:</strong> Entre 1800 e @DateTime.Now.Year</li>
+                    <li><strong>Website:</strong> Deve começar com http:// ou https://</li>
+                </ul>
+                <small>
+                    <i class="fas fa-check"></i>
+                    <strong>Dica:</strong> Cadastrar corretamente ajuda nos relatórios e buscas futuras.
+                </small>
+            </div>
+        </div>
     </div>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function() {
+            function toggleValidationSummary() {
+                const validationSummary = $('[data-valmsg-summary="true"]');
+                const hasErrors = validationSummary.find('li').length > 0;
+                if (hasErrors) {
+                    validationSummary.show();
+                } else {
+                    validationSummary.hide();
+                }
+            }
+
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+
+            $("#fabricanteForm").submit(function() {
+                const submitBtn = $("#btnSubmit");
+                submitBtn.prop("disabled", true)
+                        .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvando...');
+
+                setTimeout(function() {
+                    if (!$("#fabricanteForm").valid()) {
+                        submitBtn.prop("disabled", false)
+                                .html('<i class="fas fa-save"></i> Salvar');
+                        toggleValidationSummary();
+                    }
+                }, 100);
+            });
+
+            toggleValidationSummary();
+        });
+    </script>
 }

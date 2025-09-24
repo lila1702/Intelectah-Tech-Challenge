@@ -41,11 +41,12 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.ConfigurationOptions = new ConfigurationOptions
     {
         EndPoints = { "localhost:6379" },
-        ConnectTimeout = 5000,
-        SyncTimeout = 5000,
-        ConnectRetry = 3,
+        ConnectTimeout = 1000,
+        SyncTimeout = 1000,
+        AsyncTimeout = 1000,
+        ConnectRetry = 2,
         ReconnectRetryPolicy = new ExponentialRetry(1000),
-        AbortOnConnectFail = false
+        AbortOnConnectFail = true
     };
 });
 

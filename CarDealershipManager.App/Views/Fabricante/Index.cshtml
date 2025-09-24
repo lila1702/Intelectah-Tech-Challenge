@@ -1,64 +1,56 @@
-@model IEnumerable<CarDealershipManager.Core.Models.Fabricante>
+@model IEnumerable<CarDealershipManager.Core.DTOs.FabricanteDTO>
 
 @{
-    ViewData["Title"] = "Fabricante";
+    ViewData["Title"] = "Fabricantes";
 }
 
-<h1>Index</h1>
+<h1>Fabricantes</h1>
 
 <p>
-    <a asp-action="Create">Criar Novo</a>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Novo Fabricante
+    </a>
 </p>
-<table class="table">
+
+<table class="table table-striped align-middle">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Nome)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PaisOrigem)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.AnoFundacao)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Website)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UpdatedAt)
-            </th>
+            <th>@Html.DisplayNameFor(model => model.Nome)</th>
+            <th>@Html.DisplayNameFor(model => model.PaisOrigem)</th>
+            <th>@Html.DisplayNameFor(model => model.AnoFundacao)</th>
+            <th>@Html.DisplayNameFor(model => model.Website)</th>
+            <th>@Html.DisplayNameFor(model => model.CreatedAt)</th>
+            <th>@Html.DisplayNameFor(model => model.UpdatedAt)</th>
+            <th>Ações</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nome)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PaisOrigem)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.AnoFundacao)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Website)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UpdatedAt)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Editar</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Detalhes</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Deletar</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Nome</td>
+                <td>@item.PaisOrigem</td>
+                <td>@item.AnoFundacao</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(item.Website))
+                    {
+                        <a href="@item.Website" target="_blank">@item.Website</a>
+                    }
+                </td>
+                <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@item.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">
+                        <i class="fas fa-info-circle"></i> Detalhes
+                    </a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">
+                        <i class="fas fa-trash-alt"></i> Deletar
+                    </a>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

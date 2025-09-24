@@ -1,7 +1,6 @@
 ﻿using CarDealershipManager.Core.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 using System.Text.Json;
 
 namespace CarDealershipManager.Infrastructure.Services
@@ -10,6 +9,9 @@ namespace CarDealershipManager.Infrastructure.Services
     {
         private readonly IDistributedCache _distributedCache;
         private readonly ILogger<CacheService> _logger;
+        private static bool _isRedisAvailable = true;
+        private static DateTime _lastFailureTime = DateTime.MinValue;
+        private static readonly TimeSpan _retryInterval = TimeSpan.FromMinutes(2);
 
         public CacheService(IDistributedCache distributedCache, ILogger<CacheService> logger)
         {
@@ -19,124 +21,93 @@ namespace CarDealershipManager.Infrastructure.Services
 
         public async Task<T> GetAsync<T>(string key) where T : class
         {
+            if (!ShouldTryRedis()) return null;
+
             try
             {
                 var cachedValue = await _distributedCache.GetStringAsync(key);
 
-                if (cachedValue == null)
-                {
-                    _logger.LogDebug("Cache miss for key: {Key}", key);
+                if (string.IsNullOrEmpty(cachedValue))
                     return null;
-                }
 
-                _logger.LogDebug("Cache hit for key: {Key}", key);
+                MarkRedisAsAvailable();
                 return JsonSerializer.Deserialize<T>(cachedValue);
-            }
-            catch (RedisConnectionException ex)
-            {
-                _logger.LogWarning(ex, "Redis connection failed for key {Key}. Returning null and continuing without cache.", key);
-                return null;
-            }
-            catch (RedisTimeoutException ex)
-            {
-                _logger.LogWarning(ex, "Redis timeout for key {Key}. Returning null and continuing without cache.", key);
-                return null;
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "Failed to deserialize cached value for key {Key}. Removing invalid cache entry.", key);
-
-                // Tentar remover a entrada inválida do cache
-                try
-                {
-                    await _distributedCache.RemoveAsync(key);
-                }
-                catch (Exception removeEx)
-                {
-                    _logger.LogWarning(removeEx, "Failed to remove invalid cache entry for key {Key}", key);
-                }
-
-                return null;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error retrieving cached value for key {Key}. Returning null.", key);
+                MarkRedisAsUnavailable();
+                _logger.LogWarning(ex, "Cache failed for key {Key}, continuing without cache", key);
                 return null;
             }
         }
 
         public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class
         {
+            if (!ShouldTryRedis()) return;
+
             try
             {
                 var options = new DistributedCacheEntryOptions();
-                if (expiration.HasValue)
-                {
-                    options.SetAbsoluteExpiration(expiration.Value);
-                }
-                else
-                {
-                    options.SetAbsoluteExpiration(TimeSpan.FromMinutes(60));
-                }
+                options.SetAbsoluteExpiration(expiration ?? TimeSpan.FromMinutes(60));
 
                 var serializedValue = JsonSerializer.Serialize(value);
                 await _distributedCache.SetStringAsync(key, serializedValue, options);
 
-                _logger.LogDebug("Successfully cached value for key: {Key} with expiration: {Expiration}",
-                    key, expiration?.ToString() ?? "60 minutes");
-            }
-            catch (RedisConnectionException ex)
-            {
-                _logger.LogWarning(ex, "Redis connection failed when setting key {Key}. Continuing without caching.", key);
-            }
-            catch (RedisTimeoutException ex)
-            {
-                _logger.LogWarning(ex, "Redis timeout when setting key {Key}. Continuing without caching.", key);
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "Failed to serialize value for key {Key}. Cannot cache this object.", key);
+                MarkRedisAsAvailable();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error setting cached value for key {Key}", key);
+                MarkRedisAsUnavailable();
+                _logger.LogWarning(ex, "Failed to cache key {Key}, continuing without caching", key);
             }
         }
 
         public async Task RemoveAsync(string key)
         {
+            if (!ShouldTryRedis()) return;
+
             try
             {
                 await _distributedCache.RemoveAsync(key);
-                _logger.LogDebug("Successfully removed cache entry for key: {Key}", key);
-            }
-            catch (RedisConnectionException ex)
-            {
-                _logger.LogWarning(ex, "Redis connection failed when removing key {Key}. Key may still be cached.", key);
-            }
-            catch (RedisTimeoutException ex)
-            {
-                _logger.LogWarning(ex, "Redis timeout when removing key {Key}. Key may still be cached.", key);
+                MarkRedisAsAvailable();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error removing cached value for key {Key}", key);
+                MarkRedisAsUnavailable();
+                _logger.LogWarning(ex, "Failed to remove key {Key}", key);
             }
         }
 
         public async Task RemoveByPatternsAsync(string pattern)
         {
-            try
+            // Implementação simples - apenas loga
+            _logger.LogInformation("RemoveByPatternsAsync called with pattern: {Pattern}", pattern);
+            await Task.CompletedTask;
+        }
+
+        private static bool ShouldTryRedis()
+        {
+            if (_isRedisAvailable) return true;
+
+            // Tenta novamente após o intervalo de retry
+            if (DateTime.UtcNow - _lastFailureTime > _retryInterval)
             {
-                // Implementação específica depende do provedor de cache distribuído.
-                // Por enquanto, apenas registra que foi chamado
-                _logger.LogInformation("RemoveByPatternsAsync called with pattern: {Pattern}. Implementation pending.", pattern);
-                await Task.CompletedTask;
+                _isRedisAvailable = true;
+                return true;
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in RemoveByPatternsAsync for pattern {Pattern}", pattern);
-            }
+
+            return false;
+        }
+
+        private static void MarkRedisAsUnavailable()
+        {
+            _isRedisAvailable = false;
+            _lastFailureTime = DateTime.UtcNow;
+        }
+
+        private static void MarkRedisAsAvailable()
+        {
+            _isRedisAvailable = true;
         }
     }
 }
