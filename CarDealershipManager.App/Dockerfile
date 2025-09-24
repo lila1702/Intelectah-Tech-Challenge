@@ -24,6 +24,6 @@ WORKDIR /app
 
 COPY --from=publish /app/publish .
 
-EXPOSE 5000
+EXPOSE 80
 
 ENTRYPOINT ["dotnet", "CarDealershipManager.App.dll"]
