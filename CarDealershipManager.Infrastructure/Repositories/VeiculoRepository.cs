@@ -12,6 +12,23 @@ namespace CarDealershipManager.Infrastructure.Repositories
         {
         }
 
+        public override async Task<Veiculo> GetByIdAsync(int id)
+        {
+            var veiculo = await _dbSet.Include(v => v.Fabricante).FirstOrDefaultAsync(v => v.Id == id);
+
+            if (veiculo == null)
+            {
+                throw new InvalidOperationException("Veiculo não encontrado");
+            }
+
+            return veiculo;
+        }
+
+        public override async Task<IEnumerable<Veiculo>> GetAllActiveAsync()
+        {
+            return await _dbSet.Include(v => v.Fabricante).ToListAsync();
+        }
+
         public async Task<IEnumerable<Veiculo>> GetByFabricanteIdAsync(int fabricanteId)
         {
             return await _dbSet.Where(v => v.FabricanteId == fabricanteId).ToListAsync();
