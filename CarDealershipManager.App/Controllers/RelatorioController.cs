@@ -35,8 +35,8 @@ namespace CarDealershipManager.App.Controllers
                 Ano = ano,
                 TotalVendas = vendas.Count(),
                 ValorTotal = vendas.Sum(v => v.PrecoVenda),
-                VendasPorTipo = vendas.GroupBy(v => v.VeiculoModelo)
-                 .Select(g => new { Tipo = g.Key, Quantidade = g.Count(), Valor = g.Sum(x => x.PrecoVenda) }),
+                VendasPorTipo = vendas.GroupBy(v => v.TipoVeiculo)
+                 .Select(g => new { Tipo = g.Key.ToString(), Quantidade = g.Count(), Valor = g.Sum(x => x.PrecoVenda) }),
                 VendasPorFabricante = vendas.GroupBy(v => v.FabricanteNome)
                  .Select(g => new { Fabricante = g.Key, Quantidade = g.Count(), Valor = g.Sum(x => x.PrecoVenda) }),
                 VendasPorConcessionaria = vendas.GroupBy(v => v.ConcessionariaNome)

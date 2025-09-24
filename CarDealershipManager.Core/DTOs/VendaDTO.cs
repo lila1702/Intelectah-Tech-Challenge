@@ -1,4 +1,5 @@
-﻿using CarDealershipManager.Core.Validations;
+﻿using CarDealershipManager.Core.Enums;
+using CarDealershipManager.Core.Validations;
 using System.ComponentModel.DataAnnotations;
 
 namespace CarDealershipManager.Core.DTOs
@@ -9,6 +10,8 @@ namespace CarDealershipManager.Core.DTOs
         public int VeiculoId { get; set; }
         [Display(Name="Veículo")]
         public string VeiculoModelo { get; set; }
+        [Display(Name ="Tipo de Veículo")]
+        public TipoVeiculo TipoVeiculo { get; set; }
         [Display(Name = "Fabricante")]
         public string FabricanteNome { get; set; }
         public int ConcessionariaId { get; set; }

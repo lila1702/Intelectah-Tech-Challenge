@@ -37,6 +37,7 @@ namespace CarDealershipManager.Infrastructure.Mapping
             // Venda
             CreateMap<Venda, VendaDTO>()
                 .ForMember(dest => dest.VeiculoModelo, opt => opt.MapFrom(src => src.Veiculo.Modelo))
+                .ForMember(dest => dest.TipoVeiculo, opt => opt.MapFrom(src => src.Veiculo.TipoVeiculo))
                 .ForMember(dest => dest.FabricanteNome, opt => opt.MapFrom(src => src.Veiculo.Fabricante.Nome))
                 .ForMember(dest => dest.ConcessionariaNome, opt => opt.MapFrom(src => src.Concessionaria.Nome))
                 .ForMember(dest => dest.ClienteNome, opt => opt.MapFrom(src => src.Cliente.Nome))
