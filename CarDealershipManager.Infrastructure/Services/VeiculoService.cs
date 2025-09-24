@@ -96,7 +96,7 @@ namespace CarDealershipManager.Infrastructure.Services
                 return cached;
             }
 
-            var veiculos = await _veiculoRepository.GetAllAsync();
+            var veiculos = await _veiculoRepository.GetAllActiveAsync();
             var veiculosDTO = _mapper.Map<IEnumerable<VeiculoDTO>>(veiculos);
 
             await _cacheService.SetAsync(cacheKey, veiculosDTO, TimeSpan.FromMinutes(15));
