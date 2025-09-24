@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using CarDealershipManager.Core.Interfaces;
 using CarDealershipManager.Core.Models;
 using CarDealershipManager.Infrastructure.Data;
+using CarDealershipManager.Core.Interfaces.Repositories;
 
 namespace CarDealershipManager.Infrastructure.Repositories
 {
@@ -12,7 +12,8 @@ namespace CarDealershipManager.Infrastructure.Repositories
         }
         public async Task<Cliente?> GetByCpfAsync(string cpf)
         {
-            return await _dbSet.FirstOrDefaultAsync(c => c.CPF == cpf);
+            string cpfNormalizado = new string(cpf.Where(char.IsDigit).ToArray());
+            return await _dbSet.FirstOrDefaultAsync(c => c.CPF == cpfNormalizado);
         }
 
         public async Task<bool> IsCpfUniqueAsync(string cpf, int? id = null)

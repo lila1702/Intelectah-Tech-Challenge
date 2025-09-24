@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using CarDealershipManager.Core.Interfaces;
 using CarDealershipManager.Core.Models;
 using CarDealershipManager.Infrastructure.Data;
+using CarDealershipManager.Core.Interfaces.Repositories;
 
 namespace CarDealershipManager.Infrastructure.Repositories
 {

@@ -1,5 +1,5 @@
-﻿using CarDealershipManager.Core.Interfaces;
-using CarDealershipManager.Core.Interfaces.External;
+﻿using CarDealershipManager.Core.Interfaces.External;
+using CarDealershipManager.Core.Interfaces.Repositories;
 using CarDealershipManager.Core.Interfaces.Services;
 using CarDealershipManager.Infrastructure.Mapping;
 using CarDealershipManager.Infrastructure.Repositories;

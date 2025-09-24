@@ -1,4 +1,4 @@
-﻿namespace CarDealershipManager.Core.Interfaces
+﻿namespace CarDealershipManager.Core.Interfaces.Repositories
 {
     public interface IBaseRepository<T> where T : class
     {

@@ -1,4 +1,5 @@
 ﻿using CarDealershipManager.Core.DTOs;
+using CarDealershipManager.Core.Interfaces.Repositories;
 using CarDealershipManager.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,17 +7,20 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 public class VendaController : Controller
 {
+    private readonly IClienteRepository _clienteRepository;
     private readonly IVendaService _vendaService;
     private readonly IVeiculoService _veiculoService;
     private readonly IConcessionariaService _concessionariaService;
     private readonly ILogger<VendaController> _logger;
 
     public VendaController(
+        IClienteRepository clienteRepository,
         IVendaService vendaService,
         IVeiculoService veiculoService,
         IConcessionariaService concessionariaService,
         ILogger<VendaController> logger)
     {
+        _clienteRepository = clienteRepository;
         _vendaService = vendaService;
         _veiculoService = veiculoService;
         _concessionariaService = concessionariaService;
@@ -157,5 +161,26 @@ public class VendaController : Controller
             "Id",
             "Nome",
             vendaDTO?.ConcessionariaId);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetClienteByCpf(string cpf)
+    {
+        try
+        {
+            var cliente = await _clienteRepository.GetByCpfAsync(cpf);
+
+            if (cliente == null)
+            {
+                return Json(new { success = false });
+            }
+
+            return Json(new { success = true, nome = cliente.Nome, telefone = cliente.Telefone });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao buscar cliente pelo CPF");
+            return Json(new { success = false, message = "Erro ao buscar cliente." });
+        }
     }
 }

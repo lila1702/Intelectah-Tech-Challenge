@@ -1,4 +1,4 @@
-﻿using CarDealershipManager.Core.Interfaces;
+﻿using CarDealershipManager.Core.Interfaces.Repositories;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
