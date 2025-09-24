@@ -1,82 +1,154 @@
-@model CarDealershipManager.Core.Models.Veiculo
+@model CarDealershipManager.Core.DTOs.VeiculoCreateDTO
 @using CarDealershipManager.Core.Enums
 
 @{
     ViewData["Title"] = "Criar Veículo";
 }
 
-<h1>Criar</h1>
+<h1><i class="fas fa-car"></i> Criar Veículo</h1>
 
-<h4>Veiculo</h4>
+<!-- Mensagens de Sucesso -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Mensagens de Erro -->
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Modelo" class="control-label"></label>
-                <input asp-for="Modelo" class="form-control" />
-                <span asp-validation-for="Modelo" class="text-danger"></span>
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Novo Veículo</h5>
             </div>
+            <div class="card-body">
+                <form asp-action="Create" id="veiculoForm">
+                    <!-- Erros de Validação -->
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert" style="display:none;"></div>
 
-            <div class="form-group">
-                <label asp-for="AnoFabricacao" class="control-label"></label>
-                <input asp-for="AnoFabricacao" class="form-control" />
-                <span asp-validation-for="AnoFabricacao" class="text-danger"></span>
-            </div>
+                    <div class="form-group mb-3">
+                        <label asp-for="Modelo" class="form-label">Modelo *</label>
+                        <input asp-for="Modelo" class="form-control" placeholder="Ex: Corolla, Civic..." />
+                        <span asp-validation-for="Modelo" class="text-danger"></span>
+                    </div>
 
-            <div class="form-group">
-                <label asp-for="Preco" class="control-label"></label>
-                <input asp-for="Preco" class="form-control" />
-                <span asp-validation-for="Preco" class="text-danger"></span>
-            </div>
+                    <div class="form-group mb-3">
+                        <label asp-for="AnoFabricacao" class="form-label">Ano de Fabricação *</label>
+                        <input asp-for="AnoFabricacao" class="form-control" type="number" min="1800" placeholder="Ex: 2024" />
+                        <span asp-validation-for="AnoFabricacao" class="text-danger"></span>
+                    </div>
 
-            <div class="form-group">
-                <label asp-for="TipoVeiculo" class="control-label"></label>
-                <select asp-for="TipoVeiculo"
-                        class="form-control"
-                        asp-items="Html.GetEnumSelectList<CarDealershipManager.Core.Enums.TipoVeiculo>()">
-                    <option value="">Selecione um tipo...</option>
-                </select>
-                <span asp-validation-for="TipoVeiculo" class="text-danger"></span>
-            </div>
+                    <div class="form-group mb-3">
+                        <label asp-for="Preco" class="form-label">Preço *</label>
+                        <input asp-for="Preco" class="form-control" type="number" step="0.01" min="0.01" placeholder="Ex: 95000.00" />
+                        <span asp-validation-for="Preco" class="text-danger"></span>
+                    </div>
 
-            <div class="form-group">
-                <label for="FabricanteNome">Fabricante</label>
-                <input type="text" id="FabricanteNome" class="form-control" placeholder="Digite o nome do fabricante..." />
-                <input type="hidden" asp-for="FabricanteId" />
-                <span asp-validation-for="FabricanteId" class="text-danger"></span>
-            </div>
+                    <div class="form-group mb-3">
+                        <label asp-for="TipoVeiculo" class="form-label">Tipo de Veículo *</label>
+                        <select asp-for="TipoVeiculo"
+                                class="form-control"
+                                asp-items="Html.GetEnumSelectList<TipoVeiculo>()">
+                            <option value="">Selecione um tipo...</option>
+                        </select>
+                        <span asp-validation-for="TipoVeiculo" class="text-danger"></span>
+                    </div>
 
-            <div class="form-group">
-                <label asp-for="Descricao" class="control-label"></label>
-                <input asp-for="Descricao" class="form-control" />
-                <span asp-validation-for="Descricao" class="text-danger"></span>
+                    <div class="form-group mb-3">
+                        <label for="FabricanteNome" class="form-label">Fabricante *</label>
+                        <input type="text" id="FabricanteNome" class="form-control" placeholder="Digite o nome do fabricante..." />
+                        <input type="hidden" asp-for="FabricanteId" id="FabricanteId" />
+                        <span asp-validation-for="FabricanteId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Descricao" class="form-label">Descrição</label>
+                        <textarea asp-for="Descricao" class="form-control" rows="3" placeholder="Informações adicionais sobre o veículo..."></textarea>
+                        <span asp-validation-for="Descricao" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mt-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" id="btnSubmit">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Salvar" class="btn btn-primary" />
+        </div>
+    </div>
+
+    <!-- Painel de Ajuda -->
+    <div class="col-md-6">
+        <div class="card border-info">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Dicas de Preenchimento</h6>
             </div>
-        </form>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><strong>Modelo:</strong> Digite o nome completo do carro</li>
+                    <li><strong>Ano:</strong> Apenas números, a partir de 1800 até o ano atual</li>
+                    <li><strong>Preço:</strong> Use vírgula ou ponto para casas decimais</li>
+                    <li><strong>Fabricante:</strong> Use a busca para selecionar corretamente</li>
+                </ul>
+                <small class="text-muted">
+                    <i class="fas fa-lightbulb"></i>
+                    <strong>Dica:</strong> Preencha com atenção para relatórios mais precisos.
+                </small>
+            </div>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Voltar</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 
     <script>
-        $("#FabricanteNome").autocomplete({
-            source: '/Veiculo/SearchFabricante',
-            minLength: 2,
-            select: function (event, ui) {
-                $("#FabricanteId").val(ui.item.id);
-            }
+        $(document).ready(function () {
+            // Auto-dismiss alerts
+            setTimeout(function () {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+
+            // Autocomplete de Fabricante
+            $("#FabricanteNome").autocomplete({
+                source: '/Veiculo/SearchFabricante',
+                minLength: 2,
+                select: function (event, ui) {
+                    $("#FabricanteId").val(ui.item.id);
+                }
+            });
+
+            // Loading no botão de salvar
+            $("#veiculoForm").submit(function () {
+                const submitBtn = $("#btnSubmit");
+                submitBtn.prop("disabled", true)
+                         .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvando...');
+                setTimeout(function () {
+                    if (!$("#veiculoForm").valid()) {
+                        submitBtn.prop("disabled", false)
+                                 .html('<i class="fas fa-save"></i> Salvar');
+                    }
+                }, 100);
+            });
         });
     </script>
 }

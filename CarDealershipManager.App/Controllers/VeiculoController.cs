@@ -1,31 +1,45 @@
-using CarDealershipManager.Core.Models;
+using CarDealershipManager.Core.DTOs;
+using CarDealershipManager.Core.Enums;
+using CarDealershipManager.Core.Interfaces.Services;
 using CarDealershipManager.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace CarDealershipManager.App.Controllers
 {
     public class VeiculoController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IVeiculoService _veiculoService;
+        private readonly IFabricanteService _fabricanteService;
+        private readonly ILogger<VeiculoController> _logger;
 
-        public VeiculoController(ApplicationDbContext context)
+        public VeiculoController(
+            IVeiculoService veiculoService,
+            IFabricanteService fabricanteService,
+            ILogger<VeiculoController> logger)
         {
-            _context = context;
+            _veiculoService = veiculoService;
+            _fabricanteService = fabricanteService;
+            _logger = logger;
         }
 
         // GET: Veiculo
         [Authorize]
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Veiculos.Include(v => v.Fabricante);
-            return View(await applicationDbContext.ToListAsync());
+            try
+            {
+                var veiculos = await _veiculoService.GetAllAsync();
+                return View(veiculos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao carregar lista de veículos");
+                TempData["Error"] = "Erro ao carregar veículos. Tente novamente.";
+                return View(new List<VeiculoDTO>());
+            }
         }
 
         // GET: Veiculo/Details/5
@@ -33,49 +47,62 @@ namespace CarDealershipManager.App.Controllers
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
+                return NotFound();
+
+            try
+            {
+                var veiculo = await _veiculoService.GetByIdAsync(id.Value);
+                return View(veiculo);
+            }
+            catch (ArgumentException)
             {
                 return NotFound();
             }
-
-            var veiculo = await _context.Veiculos
-                .Include(v => v.Fabricante)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (veiculo == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(ex, "Erro ao carregar detalhes do veículo ID: {Id}", id);
+                TempData["Error"] = "Erro ao carregar detalhes do veículo.";
+                return RedirectToAction(nameof(Index));
             }
-
-            return View(veiculo);
         }
 
         // GET: Veiculo/Create
         [Authorize(Roles = "Gerente")]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["FabricanteId"] = new SelectList(_context.Fabricantes, "Id", "Nome");
+            var fabricantes = await _fabricanteService.GetAllAsync();
+            ViewData["FabricanteId"] = new SelectList(fabricantes, "Id", "Nome");
             return View();
         }
 
         // POST: Veiculo/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Gerente")]
-        public async Task<IActionResult> Create([Bind("Modelo,AnoFabricacao,Preco,FabricanteId,TipoVeiculo,Descricao,Id")] Veiculo veiculo)
+        public async Task<IActionResult> Create(VeiculoCreateDTO veiculo)
         {
-            if (!_context.Fabricantes.Any(f => f.Id == veiculo.FabricanteId && !f.IsDeleted))
-            {
-                ModelState.AddModelError("FabricanteId", "Selecione um fabricante válido.");
-            }
-
             if (ModelState.IsValid)
             {
-                _context.Add(veiculo);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    await _veiculoService.CreateAsync(veiculo);
+                    TempData["Success"] = "Veículo criado com sucesso!";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (ArgumentException ex)
+                {
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "Erro ao criar veículo.";
+                    _logger.LogError(ex, "Erro ao criar veículo: {Modelo}", veiculo.Modelo);
+                }
             }
-            ViewData["FabricanteId"] = new SelectList(_context.Fabricantes, "Id", "Nome", veiculo.FabricanteId);
+
+            var fabricantes = await _fabricanteService.GetAllAsync();
+            ViewData["FabricanteId"] = new SelectList(fabricantes, "Id", "Nome", veiculo.FabricanteId);
+
             return View(veiculo);
         }
 
@@ -84,53 +111,70 @@ namespace CarDealershipManager.App.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
-            {
                 return NotFound();
-            }
 
-            var veiculo = await _context.Veiculos.FindAsync(id);
-            if (veiculo == null)
+            try
+            {
+                var veiculo = await _veiculoService.GetByIdAsync(id.Value);
+
+                var veiculoUpdateDTO = new VeiculoUpdateDTO
+                {
+                    Modelo = veiculo.Modelo,
+                    AnoFabricacao = veiculo.AnoFabricacao,
+                    Preco = veiculo.Preco,
+                    FabricanteId = veiculo.FabricanteId,
+                    TipoVeiculo = veiculo.TipoVeiculo,
+                    Descricao = veiculo.Descricao
+                };
+
+                var fabricantes = await _fabricanteService.GetAllAsync();
+                ViewData["FabricanteId"] = new SelectList(fabricantes, "Id", "Nome", veiculoUpdateDTO.FabricanteId);
+
+                return View(veiculoUpdateDTO);
+            }
+            catch (ArgumentException)
             {
                 return NotFound();
             }
-            ViewData["FabricanteId"] = new SelectList(_context.Fabricantes, "Id", "Nome", veiculo.FabricanteId);
-            return View(veiculo);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao carregar veículo para edição ID: {Id}", id);
+                TempData["Error"] = "Erro ao carregar veículo para edição.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         // POST: Veiculo/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Gerente")]
-        public async Task<IActionResult> Edit(int id, [Bind("Modelo,AnoFabricacao,Preco,FabricanteId,TipoVeiculo,Descricao,Id")] Veiculo veiculo)
+        public async Task<IActionResult> Edit(int id, VeiculoUpdateDTO veiculo)
         {
-            if (id != veiculo.Id)
-            {
-                return NotFound();
-            }
-
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(veiculo);
-                    await _context.SaveChangesAsync();
+                    await _veiculoService.UpdateAsync(id, veiculo);
+                    TempData["Success"] = "Veículo atualizado com sucesso!";
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (ArgumentException ex)
                 {
-                    if (!VeiculoExists(veiculo.Id))
-                    {
+                    if (ex.Message.Contains("não encontrado"))
                         return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+
+                    ModelState.AddModelError(string.Empty, ex.Message);
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "Erro ao atualizar veículo.";
+                    _logger.LogError(ex, "Erro ao atualizar veículo ID: {Id}", id);
+                }
             }
-            ViewData["FabricanteId"] = new SelectList(_context.Fabricantes, "Id", "Nome", veiculo.FabricanteId);
+
+            var fabricantes = await _fabricanteService.GetAllAsync();
+            ViewData["FabricanteId"] = new SelectList(fabricantes, "Id", "Nome", veiculo.FabricanteId);
+
             return View(veiculo);
         }
 
@@ -139,19 +183,23 @@ namespace CarDealershipManager.App.Controllers
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
+                return NotFound();
+
+            try
+            {
+                var veiculo = await _veiculoService.GetByIdAsync(id.Value);
+                return View(veiculo);
+            }
+            catch (ArgumentException)
             {
                 return NotFound();
             }
-
-            var veiculo = await _context.Veiculos
-                .Include(v => v.Fabricante)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (veiculo == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(ex, "Erro ao carregar veículo para exclusão ID: {Id}", id);
+                TempData["Error"] = "Erro ao carregar veículo para exclusão.";
+                return RedirectToAction(nameof(Index));
             }
-
-            return View(veiculo);
         }
 
         // POST: Veiculo/Delete/5
@@ -160,32 +208,38 @@ namespace CarDealershipManager.App.Controllers
         [Authorize(Roles = "Gerente")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var veiculo = await _context.Veiculos.FindAsync(id);
-            if (veiculo != null)
+            try
             {
-                _context.Veiculos.Remove(veiculo);
+                await _veiculoService.DeleteAsync(id);
+                TempData["Success"] = "Veículo deletado com sucesso!";
+            }
+            catch (ArgumentException)
+            {
+                TempData["Error"] = "Veículo não encontrado.";
+                _logger.LogWarning("Tentativa de deletar veículo inexistente ID: {Id}", id);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Erro ao deletar veículo.";
+                _logger.LogError(ex, "Erro ao deletar veículo ID: {Id}", id);
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool VeiculoExists(int id)
-        {
-            return _context.Veiculos.Any(e => e.Id == id);
         }
 
         [HttpGet]
         [AllowAnonymous]
-        public JsonResult SearchFabricante(string term)
+        public async Task<JsonResult> SearchFabricante(string term)
         {
-            var fabricantes = _context.Fabricantes
-                .Where(f => !f.IsDeleted && f.Nome.Contains(term))
-                .Select(f => new { id = f.Id, label = f.Nome, value = f.Nome })
-                .Take(10)
-                .ToList();
+            var fabricantes = await _fabricanteService.SearchFabricanteByNameAsync(term);
 
-            return Json(fabricantes);
+            var result = fabricantes.Select(f => new {
+                id = f.Id,
+                label = f.Nome,
+                value = f.Nome
+            });
+
+            return Json(result);
         }
     }
 }

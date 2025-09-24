@@ -112,5 +112,11 @@ namespace CarDealershipManager.Infrastructure.Services
 
             return _mapper.Map<FabricanteDTO>(fabricante);
         }
+
+        public async Task<List<FabricanteDTO>> SearchFabricanteByNameAsync(string term)
+        {
+            var fabricantes = await _fabricanteRepository.SearchFabricanteByNameAsync(term);
+            return _mapper.Map<List<FabricanteDTO>>(fabricantes);
+        }
     }
 }
