@@ -24,7 +24,10 @@
     <dd class="col-sm-10">@Model.ConcessionariaNome</dd>
 
     <dt class="col-sm-2">Cliente</dt>
-    <dd class="col-sm-10">@Model.ClienteNome - CPF: @Model.CPFCliente</dd>
+    <dd class="col-sm-10">
+        @Model.ClienteNome - CPF:
+        @(Convert.ToUInt64(Model.CPFCliente).ToString(@"000\.000\.000\-00"))
+    </dd>
 </dl>
 
 <div>

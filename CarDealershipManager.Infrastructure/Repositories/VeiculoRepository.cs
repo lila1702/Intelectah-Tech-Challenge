@@ -1,5 +1,5 @@
 ﻿using CarDealershipManager.Core.Enums;
-using CarDealershipManager.Core.Interfaces;
+using CarDealershipManager.Core.Interfaces.Repositories;
 using CarDealershipManager.Core.Models;
 using CarDealershipManager.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +10,23 @@ namespace CarDealershipManager.Infrastructure.Repositories
     {
         public VeiculoRepository(ApplicationDbContext context) : base(context)
         {
+        }
+
+        public override async Task<Veiculo> GetByIdAsync(int id)
+        {
+            var veiculo = await _dbSet.Include(v => v.Fabricante).FirstOrDefaultAsync(v => v.Id == id);
+
+            if (veiculo == null)
+            {
+                throw new InvalidOperationException("Veiculo não encontrado");
+            }
+
+            return veiculo;
+        }
+
+        public override async Task<IEnumerable<Veiculo>> GetAllActiveAsync()
+        {
+            return await _dbSet.Include(v => v.Fabricante).ToListAsync();
         }
 
         public async Task<IEnumerable<Veiculo>> GetByFabricanteIdAsync(int fabricanteId)

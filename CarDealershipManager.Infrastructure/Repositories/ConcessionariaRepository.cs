@@ -1,4 +1,4 @@
-﻿using CarDealershipManager.Core.Interfaces;
+﻿using CarDealershipManager.Core.Interfaces.Repositories;
 using CarDealershipManager.Core.Models;
 using CarDealershipManager.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;

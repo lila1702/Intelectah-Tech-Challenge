@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using CarDealershipManager.Core.DTOs;
 using CarDealershipManager.Core.Models;
-using CarDealershipManager.Core.Interfaces;
 using CarDealershipManager.Core.Interfaces.Services;
+using CarDealershipManager.Core.Interfaces.Repositories;
 
 namespace CarDealershipManager.Infrastructure.Services
 {
@@ -31,7 +31,7 @@ namespace CarDealershipManager.Infrastructure.Services
         public async Task<VendaDTO> CreateAsync(VendaCreateDTO vendaDTO)
         {
             // Validações básicas
-            if (vendaDTO.DataVenda > DateTime.UtcNow)
+            if (vendaDTO.DataVenda.Date > DateTime.UtcNow.Date)
                 throw new ArgumentException("A data da venda não pode ser futura.");
 
             var veiculo = await _veiculoRepository.GetByIdAsync(vendaDTO.VeiculoId);
@@ -45,15 +45,21 @@ namespace CarDealershipManager.Infrastructure.Services
             if (vendaDTO.PrecoVenda > veiculo.Preco)
                 throw new ArgumentException("O preço de venda não pode ser maior que o preço do veículo.");
 
-            // Buscar ou criar cliente
+            // Buscar ou criar o cliente
+            var cpfNormalizado = new string(vendaDTO.ClienteCPF.Where(char.IsDigit).ToArray());
+            var telefoneNormalizado = new string(vendaDTO.ClienteTelefone.Where(char.IsDigit).ToArray());
+
             var cliente = await _clienteRepository.GetByCpfAsync(vendaDTO.ClienteCPF);
             if (cliente == null)
             {
                 cliente = new Cliente
                 {
                     Nome = vendaDTO.ClienteNome,
-                    CPF = vendaDTO.ClienteCPF,
-                    Telefone = vendaDTO.ClienteTelefone
+                    CPF = cpfNormalizado,
+                    Telefone = telefoneNormalizado,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    IsDeleted = false
                 };
                 cliente = await _clienteRepository.AddAsync(cliente);
             }
@@ -85,7 +91,7 @@ namespace CarDealershipManager.Infrastructure.Services
 
         public async Task<IEnumerable<VendaDTO>> GetAllAsync()
         {
-            var vendas = await _vendaRepository.GetAllActiveAsync();
+            var vendas = await _vendaRepository.GetAllAsync();
             return _mapper.Map<IEnumerable<VendaDTO>>(vendas);
         }
 

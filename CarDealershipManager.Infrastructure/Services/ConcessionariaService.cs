@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using CarDealershipManager.Core.DTOs;
-using CarDealershipManager.Core.Interfaces;
+using CarDealershipManager.Core.Interfaces.Repositories;
 using CarDealershipManager.Core.Interfaces.Services;
 using CarDealershipManager.Core.Models;
 

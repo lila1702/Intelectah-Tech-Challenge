@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CarDealershipManager.Core.Interfaces
+namespace CarDealershipManager.Core.Interfaces.Repositories
 {
     public interface IFabricanteRepository : IBaseRepository<Fabricante>
     {

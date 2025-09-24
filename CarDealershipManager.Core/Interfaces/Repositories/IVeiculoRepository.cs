@@ -1,7 +1,7 @@
 ﻿using CarDealershipManager.Core.Enums;
 using CarDealershipManager.Core.Models;
 
-namespace CarDealershipManager.Core.Interfaces
+namespace CarDealershipManager.Core.Interfaces.Repositories
 {
     public interface IVeiculoRepository : IBaseRepository<Veiculo>
     {
