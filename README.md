@@ -33,7 +33,7 @@ O projeto usa SQL Server. A string de conexão padrão está definida no `appset
 
 ### Criar o Banco de Dados
 ````
-dotnet ef database update
+dotnet ef database update --project CarDealershipManager.Infrastructure --startup-project CarDealershipManager.App
 ````
 
 Isso aplicará as migrations e criará o banco CarDealershipDB.
